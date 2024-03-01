@@ -60,7 +60,7 @@ def get_and_preprocess_compas_data_RBF(params):
 	POSITIVE_OUTCOME = params.positive_outcome
 	NEGATIVE_OUTCOME = params.negative_outcome
 
-	compas_df = pd.read_csv("../Fooling-LIME-SHAP-master/data/compas-scores-two-years.csv", index_col=0)
+	compas_df = pd.read_csv("data/compas-scores-two-years.csv", index_col=0)
 	compas_df = compas_df.loc[(compas_df['days_b_screening_arrest'] <= 30) &
 							  (compas_df['days_b_screening_arrest'] >= -30) &
 							  (compas_df['is_recid'] != -1) &

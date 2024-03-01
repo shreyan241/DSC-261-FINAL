@@ -96,9 +96,7 @@ class DropoutVAE:
         return np.asarray(Yt_hat)
                           
     def mean_predict(self, x_test, batch_size=1, nums=1000):
-        predict_stochastic = K.function([self.decoder.layers[0].input,
-                                K.learning_phase()],
-                                [self.decoder.get_output_at(0)])
+        predict_stochastic = K.function([self.decoder.layers[0].input, K.learning_phase()], [self.decoder.get_output_at(0)])
         latents = self.encoder.predict(x_test)[0]
         Yt_hat = []
         for _ in range(nums):

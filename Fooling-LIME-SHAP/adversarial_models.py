@@ -147,8 +147,8 @@ class Adversarial_Lime_Model(Adversarial_Model):
 			# Original perturbation sampling requires data with average 0 and variance 1
 			self.scaler = StandardScaler()
 
-		# Forest or RBF
-		self.generator = generator
+		else:
+			self.generator = generator
 
 	def train(self, X, y, feature_names, perturbation_multiplier=30, categorical_features=[], integer_attributes=[], rf_estimators=100, estimator=None):
 		""" Trains the adversarial LIME model.  This method trains the perturbation detection classifier to detect instances

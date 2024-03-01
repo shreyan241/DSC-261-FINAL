@@ -220,21 +220,21 @@ def experiment_main():
 	# Adversarial models
 	adv_models = dict()
 	adv_models["Perturbation"] = Adversarial_Kernel_SHAP_Model(racist_model_f(), innocuous_model_psi()).train(xtrain, ytrain, feature_names=features)
-	adv_models["DropoutVAE"] = Adversarial_Kernel_SHAP_Model(racist_model_f(), innocuous_model_psi(), generator = "DropoutVAE", generator_specs = generator_specs).\
-            				train(xtrain, ytrain, feature_names=features, dummy_idcs=dummy_indcs, integer_idcs=integer_attributes)
+	# adv_models["DropoutVAE"] = Adversarial_Kernel_SHAP_Model(racist_model_f(), innocuous_model_psi(), generator = "DropoutVAE", generator_specs = generator_specs).\
+            				# train(xtrain, ytrain, feature_names=features, dummy_idcs=dummy_indcs, integer_idcs=integer_attributes)
 	adv_models["RBF"] = Adversarial_Kernel_SHAP_Model(racist_model_f(), innocuous_model_psi(), generator = "RBF", generator_specs = generator_specs).\
             				train(xtrain, ytrain, feature_names=features, dummy_idcs=dummy_indcs, integer_idcs=integer_attributes)
 	adv_models["Forest"] = Adversarial_Kernel_SHAP_Model(racist_model_f(), innocuous_model_psi(), generator = "Forest", generator_specs = generator_specs).\
             				train(xtrain, ytrain, feature_names=features, dummy_idcs=dummy_indcs, integer_idcs=integer_attributes)
 
-	for adversarial in ["Perturbation", "DropoutVAE", "RBF", "Forest"]:
+	for adversarial in ["Perturbation", "RBF", "Forest"]:
 		adv_shap = adv_models[adversarial]
 
 		# Explainers
 		adv_kernel_explainers = dict()
 		adv_kernel_explainers["Perturbation"] = shap.KernelExplainer(adv_shap.predict, background_distribution)
-		adv_kernel_explainers["DropoutVAE"] = shap.KernelExplainer(adv_shap.predict, xtrain, generator="DropoutVAE", generator_specs=generator_specs,\
-								dummy_idcs=dummy_indcs, integer_idcs=integer_attributes, instance_multiplier=100)
+		# adv_kernel_explainers["DropoutVAE"] = shap.KernelExplainer(adv_shap.predict, xtrain, generator="DropoutVAE", generator_specs=generator_specs,\
+								# dummy_idcs=dummy_indcs, integer_idcs=integer_attributes, instance_multiplier=100)
 		adv_kernel_explainers["RBF"] = shap.KernelExplainer(adv_shap.predict, xtrain, generator="RBF", generator_specs=generator_specs,\
 								dummy_idcs=dummy_indcs)
 		adv_kernel_explainers["Forest"] = shap.KernelExplainer(adv_shap.predict, xtrain, generator="Forest", generator_specs=generator_specs,\
@@ -242,7 +242,7 @@ def experiment_main():
 		adv_kernel_explainers["ForestFill"] = shap.KernelExplainer(adv_shap.predict, xtrain, generator="Forest", generator_specs=generator_specs,\
                                 dummy_idcs=dummy_indcs)
 
-		for explainer in ["Perturbation", "DropoutVAE", "RBF", "Forest", "ForestFill"]:
+		for explainer in ["Perturbation", "RBF", "Forest", "ForestFill"]:
 			adv_kernel_explainer = adv_kernel_explainers[explainer]
 
 			# Fill data option
@@ -284,8 +284,8 @@ def experiment_main():
 	# Adversarial models
 	adv_models = dict()
 	adv_models["Perturbation"] = Adversarial_Kernel_SHAP_Model(racist_model_f(), innocuous_model_psi_two()).train(xtrain, ytrain, feature_names=features)
-	adv_models["DropoutVAE"] = Adversarial_Kernel_SHAP_Model(racist_model_f(), innocuous_model_psi_two(), generator = "DropoutVAE", generator_specs = generator_specs).\
-            				train(xtrain, ytrain, feature_names=features, dummy_idcs=dummy_indcs, integer_idcs=integer_attributes)
+	# adv_models["DropoutVAE"] = Adversarial_Kernel_SHAP_Model(racist_model_f(), innocuous_model_psi_two(), generator = "DropoutVAE", generator_specs = generator_specs).\
+            				# train(xtrain, ytrain, feature_names=features, dummy_idcs=dummy_indcs, integer_idcs=integer_attributes)
 	adv_models["RBF"] = Adversarial_Kernel_SHAP_Model(racist_model_f(), innocuous_model_psi_two(), generator = "RBF", generator_specs = generator_specs).\
             				train(xtrain, ytrain, feature_names=features, dummy_idcs=dummy_indcs, integer_idcs=integer_attributes)
 	adv_models["Forest"] = Adversarial_Kernel_SHAP_Model(racist_model_f(), innocuous_model_psi_two(), generator = "Forest", generator_specs = generator_specs).\
@@ -297,15 +297,15 @@ def experiment_main():
 		# Explainers
 		adv_kernel_explainers = dict()
 		adv_kernel_explainers["Perturbation"] = shap.KernelExplainer(adv_shap.predict, background_distribution)
-		adv_kernel_explainers["DropoutVAE"] = shap.KernelExplainer(adv_shap.predict, xtrain, generator="DropoutVAE", generator_specs=generator_specs,\
-								dummy_idcs=dummy_indcs, integer_idcs=integer_attributes, instance_multiplier=100)
+		# adv_kernel_explainers["DropoutVAE"] = shap.KernelExplainer(adv_shap.predict, xtrain, generator="DropoutVAE", generator_specs=generator_specs,\
+								# dummy_idcs=dummy_indcs, integer_idcs=integer_attributes, instance_multiplier=100)
 		adv_kernel_explainers["RBF"] = shap.KernelExplainer(adv_shap.predict, xtrain, generator="RBF", generator_specs=generator_specs,\
 								dummy_idcs=dummy_indcs)
 		adv_kernel_explainers["Forest"] = shap.KernelExplainer(adv_shap.predict, xtrain, generator="Forest", generator_specs=generator_specs,\
 								dummy_idcs=dummy_indcs)
 		adv_kernel_explainers["ForestFill"] = shap.KernelExplainer(adv_shap.predict, xtrain, generator="Forest", generator_specs=generator_specs,\
                                 dummy_idcs=dummy_indcs)
-		for explainer in ["Perturbation", "DropoutVAE", "RBF", "Forest", "ForestFill"]:
+		for explainer in ["Perturbation", "RBF", "Forest", "ForestFill"]:
 			adv_kernel_explainer = adv_kernel_explainers[explainer]
 
 			# Fill data option
