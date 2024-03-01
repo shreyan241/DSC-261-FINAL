@@ -5,6 +5,8 @@ train <- read.csv(file="../Data/compas_RBF_train.csv")
 # Encode categorical features as factor
 train$response <- as.factor(train$response)
 train$two_year_recid <- as.factor(train$two_year_recid)
+train$c_charge_degree <- as.factor(train$c_charge_degree)
+train$sex <- as.factor(train$sex)
 
 #############
 # rbfDataGen
