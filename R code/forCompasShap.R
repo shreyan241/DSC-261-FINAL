@@ -48,6 +48,8 @@ write.csv(forestGenerated, file = "../Data/compas_adversarial_train_forest.csv",
 train <- read.csv(file="../Data/compas_forest_train.csv")
 train$response <- as.factor(train$response)
 train$two_year_recid <- as.factor(train$two_year_recid)
+train$c_charge_degree <- as.factor(train$c_charge_degree)
+train$sex <- as.factor(train$sex)
 generator <- rbfDataGen(response~., data = train)
 
 generated <- newdata(generator, size = 100)
