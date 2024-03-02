@@ -8,8 +8,6 @@ train$two_year_recid <- as.factor(train$two_year_recid)
 train$c_charge_degree <- as.factor(train$c_charge_degree)
 train$sex <- as.factor(train$sex)
 
-str(train)
-
 #############
 # rbfDataGen
 #############
