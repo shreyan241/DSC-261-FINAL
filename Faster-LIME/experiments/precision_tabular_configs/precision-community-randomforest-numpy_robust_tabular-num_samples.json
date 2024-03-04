@@ -1,0 +1,39 @@
+{
+  "dataset": {
+    "name": "compas",
+    "params": {
+    }
+  },
+  "model": {
+    "name": "RandomForestClassifier",
+    "params": {
+      "n_estimators": 100
+    }
+  },
+  "explanations": {
+    "type": "numpy_robust_tabular",
+    "n_explanations": 100,
+    "model_params": {
+      "ctgan_epochs": 300,
+      "ctgan_params": {
+        "embedding_dim": 512,
+        "gen_dim": [256, 256, 256, 256, 256],
+        "dis_dim": [256, 256, 256, 256, 256]
+      },
+      "measure_distance": "raw",
+      "categorical_feature_idxes": [],
+      "use_onehot": true
+    },
+    "inference_params": {
+      "num_samples": 1000,
+      "num_features": 20
+    },
+    "data_row_param_name": "data_row",
+    "predict_fn_param_name": "predict_fn"
+  },
+  "experiments": {
+    "n_runs": 5,
+    "type": "num_samples",
+    "values": [1000, 2000, 3000]
+  }
+}
