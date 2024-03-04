@@ -45,14 +45,14 @@ write.csv(forestGenerated, file = "../Data/compas_adversarial_train_forest.csv",
 #################################################
 # For RBF adversarial model at forest experiment
 #################################################
-train <- read.csv(file="../Data/compas_forest_train.csv")
-train$response <- as.factor(train$response)
-train$two_year_recid <- as.factor(train$two_year_recid)
-train$c_charge_degree <- as.factor(train$c_charge_degree)
-train$sex <- as.factor(train$sex)
-generator <- rbfDataGen(response~., data = train)
+# train <- read.csv(file="../Data/compas_forest_train.csv")
+# train$response <- as.factor(train$response)
+# train$two_year_recid <- as.factor(train$two_year_recid)
+# train$c_charge_degree <- as.factor(train$c_charge_degree)
+# train$sex <- as.factor(train$sex)
+# generator <- rbfDataGen(response~., data = train)
 
-generated <- newdata(generator, size = 100)
-# Remove the response column
-generated <- generated[, -ncol(generated)]
-write.csv(generated, file = "../Data/compas_adversarial_train_RBF.csv", row.names = FALSE)
+# generated <- newdata(generator, size = 100)
+# # Remove the response column
+# generated <- generated[, -ncol(generated)]
+# write.csv(generated, file = "../Data/compas_adversarial_train_RBF.csv", row.names = FALSE)

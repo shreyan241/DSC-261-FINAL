@@ -4,6 +4,7 @@ from keras import backend as K
 from keras.models import Model
 from keras.losses import binary_crossentropy
 from keras.layers import Input, Dense, Dropout
+from keras.callbacks import EarlyStopping
 from keras.regularizers import l2
 from sklearn.model_selection import train_test_split
 
@@ -70,12 +71,14 @@ class DropoutVAE:
         
     def fit(self, x_train, x_test, epochs=100, batch_size=100,
            verbose=1):
+        early_stopping = EarlyStopping(monitor='val_loss', patience=10, restore_best_weights=True)
         self.vae.fit(x_train, 
             shuffle=True,
             epochs=epochs,
             batch_size=batch_size,
             verbose=verbose,
-            validation_data=(x_test, None))
+            validation_data=(x_test, None),
+            callbacks=[early_stopping])
 
     def fit_unsplit(self, X, epochs=100, batch_size=100, verbose=1):
         x_train, x_test = train_test_split(X, test_size = 0.5)
@@ -102,3 +105,5 @@ class DropoutVAE:
         for _ in range(nums):
             Yt_hat.append(predict_stochastic([latents, 1])) 
         return np.asarray(Yt_hat)
+    
+    

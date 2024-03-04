@@ -20,7 +20,8 @@ from sklearn.preprocessing import StandardScaler
 
 import numpy as np
 import pandas as pd
-
+import os
+import sys
 import lime
 import lime.lime_tabular
 
@@ -41,7 +42,11 @@ data_train, data_test, ytrain, ytest = train_test_split(X, y, test_size=0.1)
 
 # Train data needs to be saved so it can be generated in R
 data_train["response"] = ytrain
-data_train.to_csv("..\Data\compas_RBF_train.csv", index = False)
+
+script_dir_path = os.path.dirname(os.path.abspath(__file__))
+compass_train_path = os.path.join(script_dir_path, os.path.pardir, "Data", "compas_RBF_train.csv")
+
+data_train.to_csv(compass_train_path, index = False)
 
 # Stops the execution of experiment so generators have time to generate data in R
 # input("Press enter, when rbfDataGen and treeEnsemble generated all the data.")
@@ -78,6 +83,8 @@ xtrain = data_train.values
 xtest = data_test.values
 
 original_dim = xtrain.shape[1]
+
+
 
 ###
 ## The models f and psi for COMPAS.  We discriminate based on race for f and concider two RANDOMLY DRAWN features to display in psi
@@ -129,7 +136,7 @@ def experiment_main():
 	adv_explainers = dict()
 
 	# Generator specifications
-	generator_specs = {"original_dim": original_dim, "intermediate_dim": 8, "latent_dim": latent_dim, "epochs": 100,\
+	generator_specs = {"original_dim": original_dim, "intermediate_dim": 8, "latent_dim": latent_dim, "epochs": 1000,\
 					"dropout": 0.3, "experiment": "Compas"}
 
 	# Train the adversarial models for LIME with f and psi (fill te dictionary)
@@ -150,11 +157,13 @@ def experiment_main():
 		adv_explainers[generator] = lime.lime_tabular.LimeTabularExplainer(xtrain, feature_names=adv_models[generator].get_column_names(),\
 								discretize_continuous=False,categorical_features=categorical_feature_indcs, generator=generator,\
 								generator_specs=generator_specs, dummies=dummy_indcs, integer_attributes=integer_attributes)
-
-	# We check every combination of adversarial model/explanation method
+ 
+ 	# We check every combination of adversarial model/explanation method
 	for explainer in adv_explainers:
 		adv_explainer = adv_explainers[explainer]
 		for model in adv_models:
+			if explainer !=  "DropoutVAE" and model != "DropoutVAE":
+				break
 			adv_lime = adv_models[model]
 			explanations = []
 			for i in range(xtest.shape[0]):
@@ -204,6 +213,8 @@ def experiment_main():
 	for explainer in adv_explainers:
 		adv_explainer = adv_explainers[explainer]
 		for model in adv_models:
+			if explainer !=  "DropoutVAE" and model != "DropoutVAE":
+				break
 			adv_lime = adv_models[model]
 			explanations = []
 			for i in range(xtest.shape[0]):

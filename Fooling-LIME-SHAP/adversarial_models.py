@@ -240,10 +240,40 @@ class Adversarial_Lime_Model(Adversarial_Model):
 			encoded = self.generator.mean_predict(X_val, nums = 2*perturbation_multiplier)
 			all_x = encoded.reshape(2*perturbation_multiplier*encoded.shape[2], X_train.shape[1])
 
+			# Saving Samples
+			all_x_samples_to_save = self.scaler.inverse_transform(all_x)
+			
+			all_x_samples_to_save[:, self.numerical_cols] = (np.around(all_x_samples_to_save[:, self.numerical_cols])).astype(int)
+			categorical_feature_name = ['two_year_recid', 'c_charge_degree_F', 'c_charge_degree_M',\
+                            'sex_Female', 'sex_Male', 'race', 'unrelated_column_one', 'unrelated_column_two']
+			categorical_feature_indcs = [self.cols.index(c) for c in categorical_feature_name]
+			dummy_idcs = [[categorical_feature_indcs[0]], [categorical_feature_indcs[1], categorical_feature_indcs[2]],\
+						[categorical_feature_indcs[3], categorical_feature_indcs[4]], [categorical_feature_indcs[5]],\
+						[categorical_feature_indcs[6]], [categorical_feature_indcs[7]]]
+			
+   			# Correct values of dummy features to 0 and 1
+			for feature in dummy_idcs:
+				column = all_x_samples_to_save[:, feature]
+				binary = np.zeros(column.shape)
+				# We check if a feature has only two possible values, otherwise it has more dummies
+				if len(feature) == 1:
+					binary = (column > 0.5).astype(int)
+				else:
+					# Value 1 is given to the dummy with highest value
+					ones = column.argmax(axis = 1)
+					for i, idx in enumerate(ones):
+						binary[i, idx] = 1
+				all_x_samples_to_save[:, feature] = binary
+
+			df_samples_to_save =  pd.DataFrame(all_x_samples_to_save, columns=feature_names)
+			file_path = r"C:\Users\shrey\Desktop\DSC 261\DSC-261-FINAL\Data\compas_adversarial_train_DropoutVAE.csv"
+			df_samples_to_save.to_csv(file_path, index=False)
+			print((f"Generated samples saved to {file_path}"))
+   
 			# Concatenate the original and sampled instances
 			all_y = np.concatenate((np.zeros(all_x.shape[0]), np.ones(X_train.shape[0] + X_val.shape[0])))
 			all_x = np.concatenate((all_x, X_train, X_val), axis=0)
-
+			
 			# Reverse transofrmation back to the original dimensions
 			all_x = self.scaler.inverse_transform(all_x)
 
