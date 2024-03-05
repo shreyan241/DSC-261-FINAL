@@ -42,16 +42,3 @@ forestGenerated <- newdata(forestGenerator, size = nrow(train))
 forestGenerated <- forestGenerated[, -ncol(forestGenerated)]
 write.csv(forestGenerated, file = "../Data/compas_adversarial_train_forest.csv", row.names = FALSE)
 
-# run_compas_experiment <- function() {
-#   # Path to the Python script
-#   script_path <- "../compas_experiment_lime_only_VAE.py"
-  
-#   # Command to run the Python script
-#   command <- paste("python", script_path)
-  
-#   # Run the command
-#   system(command)
-# }
-
-# # Call the function to run the Python script
-# run_compas_experiment()

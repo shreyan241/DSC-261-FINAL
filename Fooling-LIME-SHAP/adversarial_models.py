@@ -174,7 +174,7 @@ class Adversarial_Lime_Model(Adversarial_Model):
 		all_x, all_y = [], []
 
 		# Data normalization (not for treeEnsemble or rbfDataGen, data is just loaded there)
-		if self.generator not in ["Forest", "RBF"]:
+		if self.generator not in ["Forest", "RBF", "CTGAN"]:
 			X = self.scaler.fit_transform(X)
 
 		# Generate samples with given data generator

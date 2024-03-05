@@ -136,15 +136,15 @@ def experiment_main():
 	adv_explainers = dict()
 
 	# Generator specifications
-	generator_specs = {"original_dim": original_dim, "intermediate_dim": 8, "latent_dim": latent_dim, "epochs": 1000,\
+	generator_specs = {"original_dim": original_dim, "intermediate_dim": 8, "latent_dim": latent_dim, "epochs": 100,\
 					"dropout": 0.3, "experiment": "Compas"}
 
 	# Train the adversarial models for LIME with f and psi (fill te dictionary)
 	adv_models["Perturbation"] = Adversarial_Lime_Model(racist_model_f(), innocuous_model_psi()).train(xtrain, ytrain,\
 								categorical_features=categorical_feature_indcs, feature_names=features, perturbation_multiplier=1)
-	#adv_models["DropoutVAE"] = Adversarial_Lime_Model(racist_model_f(), innocuous_model_psi(),
-								#generator = "DropoutVAE", generator_specs = generator_specs).train(xtrain, ytrain,\
-								#categorical_features=categorical_feature_indcs, integer_attributes = integer_attributes, feature_names=features, perturbation_multiplier=1)
+	adv_models["DropoutVAE"] = Adversarial_Lime_Model(racist_model_f(), innocuous_model_psi(),
+								generator = "DropoutVAE", generator_specs = generator_specs).train(xtrain, ytrain,\
+								categorical_features=categorical_feature_indcs, integer_attributes = integer_attributes, feature_names=features, perturbation_multiplier=1)
 	adv_models["RBF"] = Adversarial_Lime_Model(racist_model_f(), innocuous_model_psi(),\
 								generator = "RBF", generator_specs = generator_specs).train(xtrain,\
 								ytrain, feature_names=features, categorical_features=categorical_feature_indcs)
@@ -156,7 +156,7 @@ def experiment_main():
 								ytrain, feature_names=features, categorical_features=categorical_feature_indcs)
 
 	# Fill the dictionary with explanation methods
-	for generator in ["Perturbation", "DropoutVAE", "RBF", "Forest"]:
+	for generator in ["Perturbation", "DropoutVAE", "RBF", "Forest", "CTGAN"]:
 		adv_explainers[generator] = lime.lime_tabular.LimeTabularExplainer(xtrain, feature_names=adv_models[generator].get_column_names(),\
 								discretize_continuous=False,categorical_features=categorical_feature_indcs, generator=generator,\
 								generator_specs=generator_specs, dummies=dummy_indcs, integer_attributes=integer_attributes)
@@ -206,8 +206,12 @@ def experiment_main():
 								generator = "Forest", generator_specs = generator_specs).train(xtrain,\
 								ytrain, feature_names=features, categorical_features=categorical_feature_indcs)
 
+	adv_models["CTGAN"] = Adversarial_Lime_Model(racist_model_f(), innocuous_model_psi_two(),\
+								generator = "CTGAN", generator_specs = generator_specs).train(xtrain,\
+								ytrain, feature_names=features, categorical_features=categorical_feature_indcs)
+
 	# Fill the dictionary with explanation methods
-	for generator in ["Perturbation", "DropoutVAE", "RBF", "Forest"]:
+	for generator in ["Perturbation", "DropoutVAE", "RBF", "Forest", "CTGAN"]:
 		adv_explainers[generator] = lime.lime_tabular.LimeTabularExplainer(xtrain, feature_names=adv_models[generator].get_column_names(),
 										discretize_continuous=False, categorical_features=categorical_feature_indcs, generator=generator,\
 										generator_specs=generator_specs, dummies=dummy_indcs, integer_attributes=integer_attributes)
@@ -216,7 +220,7 @@ def experiment_main():
 	for explainer in adv_explainers:
 		adv_explainer = adv_explainers[explainer]
 		for model in adv_models:
-			if explainer !=  "DropoutVAE" and model != "DropoutVAE":
+			if explainer !=  "CTGAN" and model != "CTGAN":
 				break
 			adv_lime = adv_models[model]
 			explanations = []

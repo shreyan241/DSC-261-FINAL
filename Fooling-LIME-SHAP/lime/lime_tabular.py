@@ -281,7 +281,7 @@ class LimeTabularExplainer(object):
                                         intermediate_dim = generator_specs["intermediate_dim"],
                                         dropout = generator_specs["dropout"],
                                         latent_dim = generator_specs["latent_dim"])
-        elif generator in ["RBF", "Forest"]:
+        elif generator in ["RBF", "Forest", "CTGAN"]:
             self.generator = generator
             self.generator_specs = generator_specs
         else:
