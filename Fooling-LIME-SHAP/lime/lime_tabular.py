@@ -597,6 +597,16 @@ class LimeTabularExplainer(object):
                     data[:, feature] = (inverse[:, feature] == data_row[feature]).astype(int)
                 return data, inverse
 			# Perturbations
+            if self.generator == "CTGAN":
+                if self.generator_specs["experiment"] == "Compas":
+                    df = pd.read_csv("..\Data\compas_CTGAN.csv")
+                #TODO FIll in for other datasets
+                inverse = df.values
+                inverse[0,:] = data_row
+                data = inverse.copy()
+                for feature in categorical_features:
+                    data[:, feature] = (inverse[:, feature] == data_row[feature]).astype(int)
+                return data, inverse
             if self.generator is None:
                 data = self.random_state.normal(
                     0, 1, num_samples * num_cols).reshape(

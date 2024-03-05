@@ -229,6 +229,12 @@ class Adversarial_Lime_Model(Adversarial_Model):
 			all_x = np.concatenate((X, X_gen.values), axis = 0)
 			all_y = np.concatenate((np.ones(X.shape[0]), np.zeros(X_gen.shape[0])))
 
+		elif self.generator == "CTGAN":
+			if self.generator_specs["experiment"] == "Compas":
+				X_gen = pd.read_csv("../Data/compas_adversarial_train_CTGAN.csv") 
+			#TODO: Exted to german and CC
+			all_x = np.concatenate((X, X_gen.values), axis = 0)
+			all_y = np.concatenate((np.ones(X.shape[0]), np.zeros(X_gen.shape[0])))
 		# MCD-VAE
 		else:
 			# Generator training
