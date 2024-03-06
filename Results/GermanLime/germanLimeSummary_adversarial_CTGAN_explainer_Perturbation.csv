@@ -1,0 +1,3 @@
+1,"('Gender', 1.0)"
+2,"('CheckingAccountBalance_geq_200', 0.01)","('ForeignWorker', 0.01)","('HasCoapplicant', 0.03)","('HasGuarantor', 0.02)","('LoanAmount', 0.04)","('LoanRateAsPercentOfIncome', 0.88)","('NumberOfOtherLoansAtBank', 0.01)","('OtherLoansAtBank', 0.01)"
+3,"('CheckingAccountBalance_geq_200', 0.08)","('ForeignWorker', 0.1)","('HasCoapplicant', 0.1)","('HasGuarantor', 0.04)","('LoanAmount', 0.39)","('MissedPayments', 0.03)","('NoCurrentLoan', 0.11)","('NumberOfOtherLoansAtBank', 0.01)","('OtherLoansAtBank', 0.03)","('RentsHouse', 0.02)","('SavingsAccountBalance_geq_100_lt_500', 0.01)","('SavingsAccountBalance_geq_500', 0.02)","('Unemployed', 0.06)","('YearsAtCurrentJob_geq_4', 0.01)"

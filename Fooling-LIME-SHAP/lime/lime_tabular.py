@@ -605,6 +605,9 @@ class LimeTabularExplainer(object):
                 # CC dataset
                 else:
                     df = pd.read_csv("..\Data\cc_CTGAN.csv")
+                if self.generator_specs["experiment"] != "CC":
+                    df = pd.get_dummies(df)
+                    df = df[self.feature_names]
                 inverse = df.values
                 inverse[0,:] = data_row
                 data = inverse.copy()

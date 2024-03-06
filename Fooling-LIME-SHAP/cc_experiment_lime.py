@@ -213,7 +213,7 @@ def experiment_main():
 	print("PSI 2 MODELS SAVED!!!!!!!!!!!!!!!!!!")
 
 	# Fill the dictionary with explanation methods
-	for generator in ["Perturbation", "DropoutVAE", "RBF", "Forest"]:
+	for generator in ["Perturbation", "DropoutVAE", "RBF", "Forest", "CTGAN"]:
 		adv_explainers[generator] = lime.lime_tabular.LimeTabularExplainer(xtrain, feature_names=adv_models[generator].get_column_names(),\
 										discretize_continuous=False, categorical_features=categorical_idcs, generator=generator,\
 										generator_specs=generator_specs, dummies=dummy_idcs, integer_attributes=integer_attributes)

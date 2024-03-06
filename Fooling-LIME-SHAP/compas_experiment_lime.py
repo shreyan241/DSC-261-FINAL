@@ -47,9 +47,8 @@ data_train["response"] = ytrain
 # data_train.to_csv("..\Data\compas_RBF_train.csv", index = False)
 
 script_dir_path = os.path.dirname(os.path.abspath(__file__))
-compass_train_path = os.path.join(script_dir_path, os.path.pardir, "Data", "compas_RBF_train.csv")
-
-data_train.to_csv(compass_train_path, index = False)
+compas_train_path = os.path.join(script_dir_path, os.path.pardir, "Data", "compas_RBF_train.csv")
+data_train.to_csv(compas_train_path, index = False)
 
 # Stops the execution of experiment so generators have time to generate data in R
 input("Press enter, when rbfDataGen and treeEnsemble generated all the data.")
@@ -158,7 +157,7 @@ def experiment_main():
         
 	adv_models2 = adv_models.copy()
 	adv_models2.pop("DropoutVAE")
-	with open('trained_models/compass_adversarial_lime_models_psi_1.pkl', 'wb') as file:
+	with open('trained_models/compas_adversarial_lime_models_psi_1.pkl', 'wb') as file:
 		pickle.dump(adv_models2, file)
 	print("PSI 1 MODELS SAVED!!!!!!!!!!!!!!!!!!")
  	
@@ -223,7 +222,7 @@ def experiment_main():
 
 	adv_models2 = adv_models.copy()
 	adv_models2.pop("DropoutVAE")
-	with open('trained_models/compass_adversarial_lime_models_psi_2.pkl', 'wb') as file:
+	with open('trained_models/compas_adversarial_lime_models_psi_2.pkl', 'wb') as file:
 		pickle.dump(adv_models2, file)
 	print("PSI 2 MODELS SAVED!!!!!!!!!!!!!!!!!!")
  	

@@ -235,10 +235,14 @@ class Adversarial_Lime_Model(Adversarial_Model):
 			if self.generator_specs["experiment"] == "Compas":
 				X_gen = pd.read_csv("../Data/compas_adversarial_train_CTGAN.csv")
 			elif self.generator_specs["experiment"] == "German":
-				X_gen = pd.read_csv("../Data/german_adversarial_train_RBF.csv")
+				X_gen = pd.read_csv("../Data/german_adversarial_train_CTGAN.csv")
 			# CC dataset
 			else:
-				X_gen = pd.read_csv("../Data/cc_adversarial_train_RBF.csv")
+				X_gen = pd.read_csv("../Data/cc_adversarial_train_CTGAN.csv")
+			# Create dummies (except for CC which does not have any categorical features)
+			if self.generator_specs["experiment"] != "CC":
+				X_gen = pd.get_dummies(X_gen)
+				X_gen = X_gen[self.cols]
 			all_x = np.concatenate((X, X_gen.values), axis = 0)
 			all_y = np.concatenate((np.ones(X.shape[0]), np.zeros(X_gen.shape[0])))
 		# MCD-VAE
@@ -265,13 +269,18 @@ class Adversarial_Lime_Model(Adversarial_Model):
 							[categorical_feature_indcs[6]], [categorical_feature_indcs[7]]]
 				DropoutVAE_save_path = os.path.join(script_dir_path, os.path.pardir, "Data", "compas_adversarial_train_DropoutVAE")
 
-
-
 			elif self.generator_specs["experiment"] == "CC":
 				categorical_features = ["unrelated_column_one", "unrelated_column_two"]
 				categorical_feature_indcs = [self.cols.index(c) for c in categorical_features]
 				dummy_idcs = [[categorical_feature_indcs[0]], [categorical_feature_indcs[1]]]
 				DropoutVAE_save_path = os.path.join(script_dir_path, os.path.pardir, "Data", "cc_adversarial_train_DropoutVAE")
+			
+   			# German dataset
+			else:
+				dummy_idcs = [[self.cols.index('CheckingAccountBalance_geq_200'), self.cols.index('CheckingAccountBalance_geq_0_lt_200'), self.cols.index('CheckingAccountBalance_lt_0')], \
+				[self.cols.index('SavingsAccountBalance_geq_500'), self.cols.index('SavingsAccountBalance_geq_100_lt_500'), self.cols.index('SavingsAccountBalance_lt_100')], \
+				[self.cols.index('YearsAtCurrentJob_geq_4'), self.cols.index('YearsAtCurrentJob_geq_1_lt_4'), self.cols.index('YearsAtCurrentJob_lt_1')]]
+				DropoutVAE_save_path = os.path.join(script_dir_path, os.path.pardir, "Data", "german_adversarial_train_DropoutVAE")
 
    			# Correct values of dummy features to 0 and 1
 			for feature in dummy_idcs:
