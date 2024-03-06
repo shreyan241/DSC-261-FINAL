@@ -22,6 +22,7 @@ import numpy as np
 import pandas as pd
 import os
 import sys
+import pickle
 import lime
 import lime.lime_tabular
 
@@ -154,8 +155,14 @@ def experiment_main():
 	adv_models["CTGAN"] = Adversarial_Lime_Model(racist_model_f(), innocuous_model_psi(),\
 								generator = "CTGAN", generator_specs = generator_specs).train(xtrain,\
 								ytrain, feature_names=features, categorical_features=categorical_feature_indcs)
-
-	# Fill the dictionary with explanation methods
+        
+	adv_models2 = adv_models.copy()
+	adv_models2.pop("DropoutVAE")
+	with open('trained_models/adversarial_lime_models.pkl', 'wb') as file:
+		pickle.dump(adv_models2, file)
+	print("MODELS SAVED!!!!!!!!!!!!!!!!!!")
+ 	
+  # Fill the dictionary with explanation methods
 	for generator in ["Perturbation", "DropoutVAE", "RBF", "Forest", "CTGAN"]:
 		adv_explainers[generator] = lime.lime_tabular.LimeTabularExplainer(xtrain, feature_names=adv_models[generator].get_column_names(),\
 								discretize_continuous=False,categorical_features=categorical_feature_indcs, generator=generator,\

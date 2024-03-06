@@ -600,7 +600,11 @@ class LimeTabularExplainer(object):
             if self.generator == "CTGAN":
                 if self.generator_specs["experiment"] == "Compas":
                     df = pd.read_csv("..\Data\compas_CTGAN.csv")
-                #TODO FIll in for other datasets
+                elif self.generator_specs["experiment"] == "German":
+                    df = pd.read_csv("..\Data\german_CTGAN.csv")
+                # CC dataset
+                else:
+                    df = pd.read_csv("..\Data\cc_CTGAN.csv")
                 inverse = df.values
                 inverse[0,:] = data_row
                 data = inverse.copy()

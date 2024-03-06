@@ -5,13 +5,13 @@ train <- read.csv(file="../Data/german_RBF_train.csv")
 # List of categorical features that will be encoded as factor
 categorical <- c('Gender', 'ForeignWorker', 'Single', 'HasTelephone', 'MissedPayments', 'NoCurrentLoan',
   'CriticalAccountOrLoansElsewhere', 'OtherLoansAtBank', 'OtherLoansAtStore', 'HasCoapplicant',
-  'HasGuarantor', 'OwnsHouse', 'RentsHouse', 'Unemployed', 'JobClassIsSkilled')
+  'HasGuarantor', 'OwnsHouse', 'RentsHouse', 'Unemployed', 'JobClassIsSkilled', 'CheckingAccountBalance',
+  'SavingsAccountBalance', 'YearsAtCurrentJob')
 # Encoding of categorical features
 for (feature in categorical) {
   train[, feature] <- as.factor(train[, feature])
 }
 train$response <- as.factor(train$response)
-
 #############
 # rbfDataGen
 #############
