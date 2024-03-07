@@ -1,6 +1,7 @@
 import numpy as np
+import pickle
 import pandas as pd
-
+import os
 import sklearn
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.preprocessing import StandardScaler
@@ -14,6 +15,8 @@ from Generators.DropoutVAE import DropoutVAE
 from copy import deepcopy
 
 import shap
+
+script_dir_path = os.path.dirname(os.path.abspath(__file__))
 
 class Adversarial_Model(object):
 	"""	A scikit-learn style adversarial explainer base class for adversarial models.  This accetps 
@@ -115,7 +118,6 @@ class Adversarial_Model(object):
 		----------
 		The fidelity score of the adversarial model's predictions to the model you're trying to obscure's predictions.
 		"""
-
 		return (np.sum(self.predict(X) == self.f_obscure.predict(X)) / X.shape[0])
 
 class Adversarial_Lime_Model(Adversarial_Model):
@@ -174,7 +176,7 @@ class Adversarial_Lime_Model(Adversarial_Model):
 		all_x, all_y = [], []
 
 		# Data normalization (not for treeEnsemble or rbfDataGen, data is just loaded there)
-		if self.generator not in ["Forest", "RBF"]:
+		if self.generator not in ["Forest", "RBF", "CTGAN"]:
 			X = self.scaler.fit_transform(X)
 
 		# Generate samples with given data generator
@@ -231,8 +233,16 @@ class Adversarial_Lime_Model(Adversarial_Model):
 
 		elif self.generator == "CTGAN":
 			if self.generator_specs["experiment"] == "Compas":
-				X_gen = pd.read_csv("../Data/compas_adversarial_train_CTGAN.csv") 
-			#TODO: Exted to german and CC
+				X_gen = pd.read_csv("../Data/compas_adversarial_train_CTGAN.csv")
+			elif self.generator_specs["experiment"] == "German":
+				X_gen = pd.read_csv("../Data/german_adversarial_train_CTGAN.csv")
+			# CC dataset
+			else:
+				X_gen = pd.read_csv("../Data/cc_adversarial_train_CTGAN.csv")
+			# Create dummies (except for CC which does not have any categorical features)
+			if self.generator_specs["experiment"] != "CC":
+				X_gen = pd.get_dummies(X_gen)
+				X_gen = X_gen[self.cols]
 			all_x = np.concatenate((X, X_gen.values), axis = 0)
 			all_y = np.concatenate((np.ones(X.shape[0]), np.zeros(X_gen.shape[0])))
 		# MCD-VAE
@@ -248,15 +258,30 @@ class Adversarial_Lime_Model(Adversarial_Model):
 
 			# Saving Samples
 			all_x_samples_to_save = self.scaler.inverse_transform(all_x)
-			
 			all_x_samples_to_save[:, self.numerical_cols] = (np.around(all_x_samples_to_save[:, self.numerical_cols])).astype(int)
-			categorical_feature_name = ['two_year_recid', 'c_charge_degree_F', 'c_charge_degree_M',\
-                            'sex_Female', 'sex_Male', 'race', 'unrelated_column_one', 'unrelated_column_two']
-			categorical_feature_indcs = [self.cols.index(c) for c in categorical_feature_name]
-			dummy_idcs = [[categorical_feature_indcs[0]], [categorical_feature_indcs[1], categorical_feature_indcs[2]],\
-						[categorical_feature_indcs[3], categorical_feature_indcs[4]], [categorical_feature_indcs[5]],\
-						[categorical_feature_indcs[6]], [categorical_feature_indcs[7]]]
 			
+			if self.generator_specs["experiment"] == "Compas":
+				categorical_feature_name = ['two_year_recid', 'c_charge_degree_F', 'c_charge_degree_M',\
+							'sex_Female', 'sex_Male', 'race', 'unrelated_column_one', 'unrelated_column_two']
+				categorical_feature_indcs = [self.cols.index(c) for c in categorical_feature_name]
+				dummy_idcs = [[categorical_feature_indcs[0]], [categorical_feature_indcs[1], categorical_feature_indcs[2]],\
+							[categorical_feature_indcs[3], categorical_feature_indcs[4]], [categorical_feature_indcs[5]],\
+							[categorical_feature_indcs[6]], [categorical_feature_indcs[7]]]
+				DropoutVAE_save_path = os.path.join(script_dir_path, os.path.pardir, "Data", "compas_adversarial_train_DropoutVAE")
+
+			elif self.generator_specs["experiment"] == "CC":
+				categorical_features = ["unrelated_column_one", "unrelated_column_two"]
+				categorical_feature_indcs = [self.cols.index(c) for c in categorical_features]
+				dummy_idcs = [[categorical_feature_indcs[0]], [categorical_feature_indcs[1]]]
+				DropoutVAE_save_path = os.path.join(script_dir_path, os.path.pardir, "Data", "cc_adversarial_train_DropoutVAE")
+			
+   			# German dataset
+			else:
+				dummy_idcs = [[self.cols.index('CheckingAccountBalance_geq_200'), self.cols.index('CheckingAccountBalance_geq_0_lt_200'), self.cols.index('CheckingAccountBalance_lt_0')], \
+				[self.cols.index('SavingsAccountBalance_geq_500'), self.cols.index('SavingsAccountBalance_geq_100_lt_500'), self.cols.index('SavingsAccountBalance_lt_100')], \
+				[self.cols.index('YearsAtCurrentJob_geq_4'), self.cols.index('YearsAtCurrentJob_geq_1_lt_4'), self.cols.index('YearsAtCurrentJob_lt_1')]]
+				DropoutVAE_save_path = os.path.join(script_dir_path, os.path.pardir, "Data", "german_adversarial_train_DropoutVAE")
+
    			# Correct values of dummy features to 0 and 1
 			for feature in dummy_idcs:
 				column = all_x_samples_to_save[:, feature]
@@ -272,9 +297,8 @@ class Adversarial_Lime_Model(Adversarial_Model):
 				all_x_samples_to_save[:, feature] = binary
 
 			df_samples_to_save =  pd.DataFrame(all_x_samples_to_save, columns=feature_names)
-			file_path = r"C:\Users\shrey\Desktop\DSC 261\DSC-261-FINAL\Data\compas_adversarial_train_DropoutVAE.csv"
-			df_samples_to_save.to_csv(file_path, index=False)
-			print((f"Generated samples saved to {file_path}"))
+			df_samples_to_save.to_csv(DropoutVAE_save_path, index=False)
+			print((f"Generated samples saved to {DropoutVAE_save_path}"))
    
 			# Concatenate the original and sampled instances
 			all_y = np.concatenate((np.zeros(all_x.shape[0]), np.ones(X_train.shape[0] + X_val.shape[0])))
@@ -304,7 +328,7 @@ class Adversarial_Lime_Model(Adversarial_Model):
 
 		ypred = self.perturbation_identifier.predict(xtest)
 		self.ood_training_task_ability = (ytest, ypred)
-
+		
 		return self
 
 class Adversarial_Kernel_SHAP_Model(Adversarial_Model):

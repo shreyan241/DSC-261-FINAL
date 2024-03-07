@@ -114,9 +114,8 @@ def get_and_preprocess_cc(params):
 	# just dump all x's that have missing values 
 	cols_with_missing_values = []
 	for col in X:
-	    if len(np.where(X[col].values == '?')[0]) >= 1:
-	        cols_with_missing_values.append(col)    
-
+		if len(np.where(X[col].values == '?')[0]) >= 1:
+			cols_with_missing_values.append(col)    
 	y = X[y_col]
 	y_cutoff = np.percentile(y, high_violent_crimes_threshold)
 	X = X.drop(cols_with_missing_values + ['communityname string', 'fold numeric', 'county numeric', 'community numeric', 'state numeric'] + [y_col], axis=1)
