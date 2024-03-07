@@ -1,3 +1,3 @@
-1,"('MedYrHousBuilt numeric', 0.705)","('PersPerFam numeric', 0.24)","('unrelated_column_two', 0.055)"
-2,"('MedRentPctHousInc numeric', 0.015)","('MedYrHousBuilt numeric', 0.115)","('PersPerFam numeric', 0.635)","('PersPerOwnOccHous numeric', 0.15)","('unrelated_column_two', 0.085)"
-3,"('MedRentPctHousInc numeric', 0.005)","('MedYrHousBuilt numeric', 0.005)","('PctBornSameState numeric', 0.005)","('PersPerFam numeric', 0.125)","('PersPerOccupHous numeric', 0.145)","('PersPerOwnOccHous numeric', 0.715)"
+1,"('MedRentPctHousInc numeric', 0.005)","('MedYrHousBuilt numeric', 0.75)","('PersPerFam numeric', 0.245)"
+2,"('MedRentPctHousInc numeric', 0.03)","('MedYrHousBuilt numeric', 0.065)","('PersPerFam numeric', 0.665)","('PersPerOwnOccHous numeric', 0.185)","('unrelated_column_two', 0.055)"
+3,"('MedYrHousBuilt numeric', 0.01)","('PersPerFam numeric', 0.08)","('PersPerOccupHous numeric', 0.175)","('PersPerOwnOccHous numeric', 0.715)","('RentMedian numeric', 0.005)","('unrelated_column_one', 0.005)","('unrelated_column_two', 0.01)"

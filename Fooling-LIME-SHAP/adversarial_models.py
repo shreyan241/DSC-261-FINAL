@@ -267,20 +267,20 @@ class Adversarial_Lime_Model(Adversarial_Model):
 				dummy_idcs = [[categorical_feature_indcs[0]], [categorical_feature_indcs[1], categorical_feature_indcs[2]],\
 							[categorical_feature_indcs[3], categorical_feature_indcs[4]], [categorical_feature_indcs[5]],\
 							[categorical_feature_indcs[6]], [categorical_feature_indcs[7]]]
-				DropoutVAE_save_path = os.path.join(script_dir_path, os.path.pardir, "Data", "compas_adversarial_train_DropoutVAE")
+				DropoutVAE_save_path = os.path.join(script_dir_path, os.path.pardir, "Data", "compas_adversarial_train_DropoutVAE.csv")
 
 			elif self.generator_specs["experiment"] == "CC":
 				categorical_features = ["unrelated_column_one", "unrelated_column_two"]
 				categorical_feature_indcs = [self.cols.index(c) for c in categorical_features]
 				dummy_idcs = [[categorical_feature_indcs[0]], [categorical_feature_indcs[1]]]
-				DropoutVAE_save_path = os.path.join(script_dir_path, os.path.pardir, "Data", "cc_adversarial_train_DropoutVAE")
+				DropoutVAE_save_path = os.path.join(script_dir_path, os.path.pardir, "Data", "cc_adversarial_train_DropoutVAE.csv")
 			
    			# German dataset
 			else:
 				dummy_idcs = [[self.cols.index('CheckingAccountBalance_geq_200'), self.cols.index('CheckingAccountBalance_geq_0_lt_200'), self.cols.index('CheckingAccountBalance_lt_0')], \
 				[self.cols.index('SavingsAccountBalance_geq_500'), self.cols.index('SavingsAccountBalance_geq_100_lt_500'), self.cols.index('SavingsAccountBalance_lt_100')], \
 				[self.cols.index('YearsAtCurrentJob_geq_4'), self.cols.index('YearsAtCurrentJob_geq_1_lt_4'), self.cols.index('YearsAtCurrentJob_lt_1')]]
-				DropoutVAE_save_path = os.path.join(script_dir_path, os.path.pardir, "Data", "german_adversarial_train_DropoutVAE")
+				DropoutVAE_save_path = os.path.join(script_dir_path, os.path.pardir, "Data", "german_adversarial_train_DropoutVAE.csv")
 
    			# Correct values of dummy features to 0 and 1
 			for feature in dummy_idcs:
@@ -413,21 +413,26 @@ class Adversarial_Kernel_SHAP_Model(Adversarial_Model):
 			if background_distribution is None:
 				background_distribution = shap.kmeans(X,n_kmeans).data
 		# In case of treeEnsemble and rbfDataGen we just load the whole distribution set
-		elif self.generator in ["Forest", "RBF"]:
+		elif self.generator in ["Forest", "RBF", "CTGAN"]:
 			if self.generator == "RBF":
 				if self.generator_specs["experiment"] == "Compas":
-					X_gen = pd.read_csv("../Data/compas_adversarial_train_RBF.csv")
+					X_gen = pd.read_csv("../Data/shap_compas_adversarial_train_RBF.csv")
 				elif self.generator_specs["experiment"] == "German":
 					X_gen = pd.read_csv("../Data/german_adversarial_train_RBF.csv")
 				else:
 					X_gen = pd.read_csv("../Data/cc_adversarial_train_RBF.csv")
-			else:
+			elif self.generator == "Forest":
 				if self.generator_specs["experiment"] == "Compas":
-					X_gen = pd.read_csv("../Data/compas_shap_adversarial_train_forest.csv")
+					X_gen = pd.read_csv("../Data/shap_compas_adversarial_train_forest.csv")
 				elif self.generator_specs["experiment"] == "German":
 					X_gen = pd.read_csv("../Data/german_shap_adversarial_train_forest.csv")
 				else:
 					X_gen = pd.read_csv("../Data/cc_shap_adversarial_train_forest.csv")
+			else:
+				if self.generator_specs["experiment"] != "Compas":
+					raise ValueError("CTGAN is only implemented for the Compas dataset.")
+				else:
+					X_gen = pd.read_csv("../Data/shap_compas_adversarial_train_CTGAN.csv")
 
 			# Create dummies (except for CC which does not have any categorical features)
 			if self.generator_specs["experiment"] != "CC":
@@ -461,6 +466,11 @@ class Adversarial_Kernel_SHAP_Model(Adversarial_Model):
 			new_instances.append(point)
 
 		substituted_training_data = np.vstack(new_instances)
+		DropoutVAE_save_path_shap = os.path.join(script_dir_path, os.path.pardir, "Data", "shap_compas_adversarial_train_DropoutVAE.csv")
+		df_samples_to_save =  pd.DataFrame(substituted_training_data, columns=feature_names)
+		df_samples_to_save.to_csv(DropoutVAE_save_path_shap, index=False)
+		print((f"Generated samples saved to {DropoutVAE_save_path_shap}"))
+  
 		all_instances_x = np.vstack((repeated_X, substituted_training_data))
 
 		# make sure feature truly is out of distribution before labeling it

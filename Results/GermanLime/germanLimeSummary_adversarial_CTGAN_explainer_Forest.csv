@@ -1,3 +1,3 @@
-1,"('Gender', 0.99)","('LoanDuration', 0.01)"
-2,"('Age', 0.2)","('Gender', 0.01)","('LoanDuration', 0.59)","('LoanRateAsPercentOfIncome', 0.2)"
-3,"('Age', 0.22)","('ForeignWorker', 0.02)","('LoanDuration', 0.11)","('LoanRateAsPercentOfIncome', 0.61)","('OwnsHouse', 0.01)","('Unemployed', 0.01)","('YearsAtCurrentHome', 0.02)"
+1,"('Gender', 1.0)"
+2,"('Age', 0.14)","('LoanDuration', 0.7)","('LoanRateAsPercentOfIncome', 0.16)"
+3,"('Age', 0.15)","('HasGuarantor', 0.01)","('LoanDuration', 0.16)","('LoanRateAsPercentOfIncome', 0.68)"

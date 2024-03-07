@@ -17,13 +17,13 @@ generator <- rbfDataGen(response~., data = train)
 generated <- newdata(generator, size = 100)
 # Remove the response column
 generated <- generated[, -ncol(generated)]
-write.csv(generated, file = "../Data/compas_RBF.csv", row.names = FALSE)
+write.csv(generated, file = "../Data/shap_compas_RBF.csv", row.names = FALSE)
 
 # Generate data for training of the adversarial model
 generated <- newdata(generator, size = 100)
 # Remove the response column
 generated <- generated[, -ncol(generated)]
-write.csv(generated, file = "../Data/compas_adversarial_train_RBF.csv", row.names = FALSE)
+write.csv(generated, file = "../Data/shap_compas_adversarial_train_RBF.csv", row.names = FALSE)
 
 ###############
 # treeEnsemble
@@ -34,13 +34,13 @@ forestGenerator <- treeEnsemble(response~., data = train)
 forestGenerated <- newdata(forestGenerator, size = 100)
 # Remove the response column
 forestGenerated <- forestGenerated[, -ncol(forestGenerated)]
-write.csv(forestGenerated, file = "../Data/compas_forest.csv", row.names = FALSE)
+write.csv(forestGenerated, file = "../Data/shap_compas_forest.csv", row.names = FALSE)
 
 # Generiranje podatkov za ucenje sovraznega modela
 forestGenerated <- newdata(forestGenerator, size = 100)
 # Remove the response column
 forestGenerated <- forestGenerated[, -ncol(forestGenerated)]
-write.csv(forestGenerated, file = "../Data/compas_adversarial_train_forest.csv", row.names = FALSE)
+write.csv(forestGenerated, file = "../Data/shap_compas_adversarial_train_forest.csv", row.names = FALSE)
 
 #################################################
 # For RBF adversarial model at forest experiment
