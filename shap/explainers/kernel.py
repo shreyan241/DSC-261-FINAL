@@ -158,8 +158,10 @@ class KernelExplainer(Explainer):
             else:
                 if self.generator_specs["experiment"] == "Compas":
                     df = pd.read_csv("..\Data\shap_compas_CTGAN.csv")
+                elif self.generator_specs["experiment"] == "German":
+                    df = pd.read_csv("..\Data\shap_german_CTGAN.csv")
                 else:
-                    raise ValueError("CTGAN is only implemented for the Compas dataset.")
+                    df = pd.read_csv("..\Data\shap_compas_CTGAN.csv")
                     
                 # pri CC presledke spremeni v pike
                 if self.generator_specs["experiment"] != "CC":

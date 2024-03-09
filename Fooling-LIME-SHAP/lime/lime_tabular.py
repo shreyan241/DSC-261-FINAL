@@ -599,12 +599,12 @@ class LimeTabularExplainer(object):
 			# Perturbations
             if self.generator == "CTGAN":
                 if self.generator_specs["experiment"] == "Compas":
-                    df = pd.read_csv("..\Data\compas_CTGAN.csv")
+                    df = pd.read_csv("..\Data\compas_CTGAN_10000.csv")
                 elif self.generator_specs["experiment"] == "German":
-                    df = pd.read_csv("..\Data\german_CTGAN.csv")
+                    df = pd.read_csv("..\Data\german_CTGAN_10000.csv")
                 # CC dataset
                 else:
-                    df = pd.read_csv("..\Data\cc_CTGAN.csv")
+                    df = pd.read_csv("..\Data\cc_CTGAN_10000.csv")
                 if self.generator_specs["experiment"] != "CC":
                     df = pd.get_dummies(df)
                     df = df[self.feature_names]

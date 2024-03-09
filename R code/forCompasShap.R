@@ -1,7 +1,7 @@
 library(semiArtificial)
 
 # Load training set
-train <- read.csv(file="../Data/compas_RBF_train.csv")
+train <- read.csv(file="../Data/shap_compas_RBF_train.csv")
 # Encode categorical features as factor
 train$response <- as.factor(train$response)
 train$two_year_recid <- as.factor(train$two_year_recid)

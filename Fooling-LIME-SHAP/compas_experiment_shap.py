@@ -111,24 +111,23 @@ X['unrelated_column_two'] = np.random.choice([0,1],size=X.shape[0])
 
 data_train, data_test, ytrain, ytest = train_test_split(X, y, test_size=0.1)
 '''
-
+#treeEnsemble with data fill
 # # If data was split before the experiment (required for treeEnsemble with data fill)
 # data_train = pd.read_csv("..\Data\compas_forest_train.csv")
 # data_test = pd.read_csv("..\Data\compas_forest_test.csv")
 
-#treeEnsemble with data fill
 X, y, cols = get_and_preprocess_compas_data_RBF(params)
 # add unrelated columns, setup
 X['unrelated_column_one'] = np.random.choice([0,1],size=X.shape[0])
 X['unrelated_column_two'] = np.random.choice([0,1],size=X.shape[0])
 data_train, data_test, ytrain, ytest = train_test_split(X, y, test_size=0.1)
+data_train["response"] = ytrain
+data_test["response"] = ytest
+# Train data needs to be saved so it can be generated in R
+data_train.to_csv("..\Data\shap_compas_RBF_train.csv", index = False)
 
 ytrain = data_train.pop("response")
 ytest = data_test.pop("response")
-
-# Train data needs to be saved so it can be generated in R
-data_train["response"] = ytrain
-data_train.to_csv("..\Data\compas_RBF_train.csv", index = False)
 
 # Stops the execution of experiment so generators have time to generate data in R
 input("Press enter, when rbfDataGen and treeEnsemble generated all the data.")
@@ -158,7 +157,7 @@ integer_attributes = [i for i, feature in enumerate(data_test.columns)
 					if (data_test[feature].dtype in ["int64", "int32", "int8", "uint64", "uint32", "uint8"] and i not in categorical_feature_indcs)]
 
 # Response was needed only by rbfDataGen and treeEnsemble
-data_train = data_train.drop("response", axis = 1)
+# data_train = data_train.drop("response", axis = 1)
 # MCD-VAE latent dimension
 latent_dim = data_train.shape[1] // 2
 data_train = pd.get_dummies(data_train)
@@ -246,7 +245,7 @@ def experiment_main():
 		pickle.dump(adv_models2, file)
 	print("PSI 1 MODELS SAVED!!!!!!!!!!!!!!!!!!")
 
-	for adversarial in ["Perturbation", "DropoutVAE", "RBF", "Forest"]:
+	for adversarial in ["Perturbation", "DropoutVAE", "RBF", "Forest", "CTGAN"]:
 		adv_shap = adv_models[adversarial]
 
 		# Explainers
