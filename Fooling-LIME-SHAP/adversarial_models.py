@@ -455,11 +455,7 @@ class Adversarial_Kernel_SHAP_Model(Adversarial_Model):
 
 			# iterate over points, sampling and updating
 			# We check if data generator is given (in that case we substitute feature values according to the groups)
-			if self.generator is None:
-				for _ in range(X.shape[1]):
-					j = np.random.choice(X.shape[1])
-					point[j] = deepcopy(background_distribution[np.random.choice(background_distribution.shape[0]),j])
-			else:
+			if self.generator != None:
 				# With MCD-VAE we generate new distribution set for each instance
 				if isinstance(self.generator, DropoutVAE):
 					background_distribution = self.generate_data(point, dummy_idcs, integer_idcs, n_kmeans)
@@ -469,10 +465,17 @@ class Adversarial_Kernel_SHAP_Model(Adversarial_Model):
 	
 			new_instances.append(point)
 		substituted_training_data = np.vstack(new_instances)
-		DropoutVAE_save_path_shap = os.path.join(script_dir_path, os.path.pardir, "Data", "shap_compas_adversarial_train_DropoutVAE.csv")
-		df_samples_to_save =  pd.DataFrame(substituted_training_data, columns=feature_names)
-		df_samples_to_save.to_csv(DropoutVAE_save_path_shap, index=False)
-		print((f"Generated samples saved to {DropoutVAE_save_path_shap}"))
+		if isinstance(self.generator, DropoutVAE):
+			if self.generator_specs["experiment"] == "Compas":
+				DropoutVAE_save_path_shap = os.path.join(script_dir_path, os.path.pardir, "Data", "shap_compas_adversarial_train_DropoutVAE.csv")
+			elif self.generator_specs["experiment"] == "CC":
+				DropoutVAE_save_path_shap = os.path.join(script_dir_path, os.path.pardir, "Data", "shap_cc_adversarial_train_DropoutVAE.csv")
+			else:
+				DropoutVAE_save_path_shap = os.path.join(script_dir_path, os.path.pardir, "Data", "shap_german_adversarial_train_DropoutVAE.csv")
+			
+			df_samples_to_save =  pd.DataFrame(substituted_training_data, columns=feature_names)
+			df_samples_to_save.to_csv(DropoutVAE_save_path_shap, index=False)
+			print((f"Generated samples saved to {DropoutVAE_save_path_shap}"))
     #--------------------------------------------------------------------------------------
   
 		new_instances = []

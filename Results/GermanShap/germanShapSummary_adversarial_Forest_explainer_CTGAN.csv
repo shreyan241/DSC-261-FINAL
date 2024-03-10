@@ -1,0 +1,3 @@
+1,"('LoanRateAsPercentOfIncome', 1.0)"
+2,"('Age', 0.1)","('CheckingAccountBalance', 0.01)","('Gender', 0.4)","('HasTelephone', 0.01)","('JobClassIsSkilled', 0.04)","('LoanAmount', 0.14)","('LoanDuration', 0.17)","('NumberOfOtherLoansAtBank', 0.01)","('OtherLoansAtBank', 0.01)","('RentsHouse', 0.01)","('Single', 0.09)","('YearsAtCurrentHome', 0.02)"
+3,"('Age', 0.09)","('CriticalAccountOrLoansElsewhere', 0.01)","('Gender', 0.02)","('JobClassIsSkilled', 0.08)","('LoanAmount', 0.23)","('LoanDuration', 0.16)","('RentsHouse', 0.04)","('Single', 0.35)","('YearsAtCurrentHome', 0.01)","('YearsAtCurrentJob', 0.01)"

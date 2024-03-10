@@ -119,14 +119,40 @@ X = X.drop(labels = ['YearsAtCurrentJob_lt_1', 'YearsAtCurrentJob_geq_4'], axis 
 data_train, data_test, ytrain, ytest = train_test_split(X, y, test_size=0.1)'''
 
 # If data was split before the experiment (required for treeEnsemble with data fill)
-data_train = pd.read_csv("..\Data\german_forest_train.csv")
-data_test = pd.read_csv("..\Data\german_forest_test.csv")
-ytrain = data_train.pop("response")
-ytest = data_test.pop("response")
+# data_train = pd.read_csv("..\Data\german_forest_train.csv")
+# data_test = pd.read_csv("..\Data\german_forest_test.csv")
+
+X, y, cols = get_and_preprocess_german(params)
+
+# Merge the categorical features that represents the same attribute (bur are not one-hot encoded) into one feature
+geq0 = X['CheckingAccountBalance_geq_0']
+geq200 = X['CheckingAccountBalance_geq_200']
+checkingAccountBalance = ["geq_200" if geq200[i] == 1 else ("geq_0_lt_200" if geq0[i] == 1 else "lt_0") for i in range(X.shape[0])]
+X["CheckingAccountBalance"] = checkingAccountBalance
+X = X.drop(labels=['CheckingAccountBalance_geq_0', 'CheckingAccountBalance_geq_200'], axis = 1)
+
+geq100 = X['SavingsAccountBalance_geq_100']
+geq500 = X['SavingsAccountBalance_geq_500']
+savingsAccountBalance = ["geq_500" if geq500[i] == 1 else ("geq_100_lt_500" if geq100[i] == 1 else "lt_100") for i in range(X.shape[0])]
+X["SavingsAccountBalance"] = savingsAccountBalance
+X = X.drop(labels=['SavingsAccountBalance_geq_100', 'SavingsAccountBalance_geq_500'], axis = 1)
+
+lt1 = X['YearsAtCurrentJob_lt_1']
+geq4 = X['YearsAtCurrentJob_geq_4']
+yearsAtCurrentJob = ["geq_4" if geq4[i] == 1 else ("geq_1_lt_4" if lt1[i] == 0 else "lt_1") for i in range(X.shape[0])]
+X["YearsAtCurrentJob"] = yearsAtCurrentJob
+X = X.drop(labels = ['YearsAtCurrentJob_lt_1', 'YearsAtCurrentJob_geq_4'], axis = 1)
+
+# Split the data into train and test set
+data_train, data_test, ytrain, ytest = train_test_split(X, y, test_size=0.1)
+data_train["response"] = ytrain
+# data_test["response"] = ytest
 
 # Save the data, so we can generate new samples in R
-data_train["response"] = ytrain
-data_train.to_csv("..\Data\german_RBF_train.csv", index = False)
+data_train.to_csv("..\Data\shap_german_RBF_train.csv", index = False)
+
+# ytrain = data_train.pop("response")
+# ytest = data_test.pop("response")
 
 # Stops the execution of experiment so generators have time to generate data in R
 input("Press enter, when rbfDataGen and treeEnsemble generated all the data.")
@@ -138,6 +164,7 @@ latent_dim = data_train.shape[1] // 2
 # Convert categorical features to one-hot encoded vector (this must be done after saving the data
 # as rbfDataGen and treeEnsemble work with original values)
 data_train = pd.get_dummies(data_train)
+data_test = pd.get_dummies(data_test)
 features = [c for c in data_train]
 
 # Names without dummy variables (they are used for explanation methods with data generators, because dummy variables are grouped there)
@@ -193,7 +220,6 @@ loan_rate_indc = features.index('LoanRateAsPercentOfIncome')
 
 xtrain = data_train.values
 xtest = data_test.values
-
 original_dim = xtrain.shape[1]
 
 mean_lrpi = np.mean(xtrain[:,loan_rate_indc])
@@ -247,8 +273,16 @@ def experiment_main():
             				train(xtrain, ytrain, feature_names=features, dummy_idcs=dummy_idcs, integer_idcs=integer_attributes)
 	adv_models["Forest"] = Adversarial_Kernel_SHAP_Model(racist_model_f(), innocuous_model_psi(), generator = "Forest", generator_specs = generator_specs).\
             				train(xtrain, ytrain, feature_names=features, dummy_idcs=dummy_idcs, integer_idcs=integer_attributes)
+	adv_models["CTGAN"] = Adversarial_Kernel_SHAP_Model(racist_model_f(), innocuous_model_psi(), generator = "CTGAN", generator_specs = generator_specs).\
+            				train(xtrain, ytrain, feature_names=features, dummy_idcs=dummy_idcs, integer_idcs=integer_attributes)
 
-	for adversarial in ["Perturbation", "DropoutVAE", "RBF", "Forest"]:
+	adv_models2 = adv_models.copy()
+	adv_models2.pop("DropoutVAE")
+	with open('trained_models/german_adversarial_shap_models_psi_1.pkl', 'wb') as file:
+		pickle.dump(adv_models2, file)
+	print("PSI 1 MODELS SAVED!!!!!!!!!!!!!!!!!!")	
+ 
+	for adversarial in ["Perturbation", "DropoutVAE", "RBF", "Forest", "CTGAN"]:
 		adv_shap = adv_models[adversarial]
 
 		# Explainers
@@ -260,10 +294,12 @@ def experiment_main():
 								dummy_idcs=dummy_idcs)
 		adv_kernel_explainers["Forest"] = shap.KernelExplainer(adv_shap.predict, xtrain, generator="Forest", generator_specs=generator_specs,\
 								dummy_idcs=dummy_idcs)
-		adv_kernel_explainers["ForestFill"] = shap.KernelExplainer(adv_shap.predict, xtrain, generator="Forest", generator_specs=generator_specs,\
+		adv_kernel_explainers["CTGAN"] = shap.KernelExplainer(adv_shap.predict, xtrain, generator="CTGAN", generator_specs=generator_specs,\
 								dummy_idcs=dummy_idcs)
+		# adv_kernel_explainers["ForestFill"] = shap.KernelExplainer(adv_shap.predict, xtrain, generator="Forest", generator_specs=generator_specs,\
+								# dummy_idcs=dummy_idcs)
 
-		for explainer in ["Perturbation", "DropoutVAE", "RBF", "Forest", "ForestFill"]:
+		for explainer in ["Perturbation", "DropoutVAE", "RBF", "Forest", "CTGAN"]:
 			adv_kernel_explainer = adv_kernel_explainers[explainer]
 			
 			# Fill data option
@@ -277,9 +313,9 @@ def experiment_main():
 			formatted_explanations = []
 			for exp in explanations:
 				if explainer == "Perturbation":
-					formatted_explanations.append([(features[i], exp[i]) for i in range(len(exp))])
+					formatted_explanations.append([(features[i], exp[i]) for i in range(min(len(exp), len(features)))])
 				else:
-					formatted_explanations.append([(original_names[i], exp[i]) for i in range(len(exp))])
+					formatted_explanations.append([(original_names[i], exp[i]) for i in range(min(len(exp), len(original_names)))])
 
 			print (f"SHAP Ranks and Pct Occurances one unrelated feature, adversarial: {adversarial}, explainer: {explainer}:")
 			if explainer == "Perturbation":
