@@ -136,7 +136,7 @@ class KernelExplainer(Explainer):
                 raise ValueError("feature_names and experiment should not be None")
             if self.generator == "RBF":
                 if self.generator_specs["experiment"] == "Compas":
-                    df = pd.read_csv("..\Data\shap_compas_RBF.csv")
+                    df = pd.read_csv("..\Data\compas_RBF.csv")
                 elif self.generator_specs["experiment"] == "German":
                     df = pd.read_csv("..\Data\german_RBF.csv")
                 else:
@@ -146,7 +146,7 @@ class KernelExplainer(Explainer):
                     df = df[self.generator_specs["feature_names"]]
             elif self.generator == "Forest":
                 if self.generator_specs["experiment"] == "Compas":
-                    df = pd.read_csv("..\Data\shap_compas_forest.csv")
+                    df = pd.read_csv("..\Data\compas_forest.csv")
                 elif self.generator_specs["experiment"] == "German":
                     df = pd.read_csv("..\Data\german_forest.csv")
                 else:
@@ -157,11 +157,11 @@ class KernelExplainer(Explainer):
                     df = df[self.generator_specs["feature_names"]]
             else:
                 if self.generator_specs["experiment"] == "Compas":
-                    df = pd.read_csv("..\Data\shap_compas_CTGAN.csv")
+                    df = pd.read_csv("..\Data\compas_CTGAN.csv")
                 elif self.generator_specs["experiment"] == "German":
-                    df = pd.read_csv("..\Data\shap_german_CTGAN.csv")
+                    df = pd.read_csv("..\Data\german_CTGAN.csv")
                 else:
-                    df = pd.read_csv("..\Data\shap_compas_CTGAN.csv")
+                    df = pd.read_csv("..\Data\compas_CTGAN.csv")
                     
                 # pri CC presledke spremeni v pike
                 if self.generator_specs["experiment"] != "CC":
