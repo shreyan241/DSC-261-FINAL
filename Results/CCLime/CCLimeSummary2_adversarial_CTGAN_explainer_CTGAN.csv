@@ -1,0 +1,3 @@
+1,"('MedYrHousBuilt numeric', 0.67)","('PersPerFam numeric', 0.135)","('unrelated_column_one', 0.195)"
+2,"('MedRentPctHousInc numeric', 0.01)","('MedYrHousBuilt numeric', 0.12)","('PctBornSameState numeric', 0.01)","('PersPerFam numeric', 0.55)","('PersPerOwnOccHous numeric', 0.105)","('unrelated_column_one', 0.205)"
+3,"('MedRentPctHousInc numeric', 0.025)","('MedYrHousBuilt numeric', 0.025)","('PctBornSameState numeric', 0.005)","('PersPerFam numeric', 0.305)","('PersPerOccupHous numeric', 0.1)","('PersPerOwnOccHous numeric', 0.54)"

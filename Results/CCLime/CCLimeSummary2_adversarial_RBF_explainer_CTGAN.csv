@@ -1,0 +1,3 @@
+1,"('MedNumBR numeric', 0.145)","('MedYrHousBuilt numeric', 0.6)","('PersPerFam numeric', 0.255)"
+2,"('MedNumBR numeric', 0.465)","('MedYrHousBuilt numeric', 0.055)","('PersPerFam numeric', 0.405)","('PersPerOwnOccHous numeric', 0.07)","('unrelated_column_one', 0.005)"
+3,"('MedNumBR numeric', 0.315)","('MedRentPctHousInc numeric', 0.005)","('MedYrHousBuilt numeric', 0.04)","('PersPerFam numeric', 0.335)","('PersPerOwnOccHous numeric', 0.305)"

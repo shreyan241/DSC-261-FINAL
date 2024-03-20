@@ -25,6 +25,9 @@ import matplotlib.cm as cm
 
 import numpy as np
 import pandas as pd
+import os
+import pickle 
+import sys
 
 import lime
 import lime.lime_tabular
@@ -95,7 +98,7 @@ def s_score(X, n_clusters_list):
 	plt.show()
 
 # Set up experiment parameters
-params = Params("../Fooling-LIME-SHAP-master/model_configurations/experiment_params.json")
+params = Params("model_configurations/experiment_params.json")
 np.random.seed(params.seed)
 
 # Prepare data (use this option if you are not using treeEnsemble with data fill)
@@ -108,26 +111,33 @@ X['unrelated_column_two'] = np.random.choice([0,1],size=X.shape[0])
 
 data_train, data_test, ytrain, ytest = train_test_split(X, y, test_size=0.1)
 '''
+#treeEnsemble with data fill
+# # If data was split before the experiment (required for treeEnsemble with data fill)
+# data_train = pd.read_csv("..\Data\compas_forest_train.csv")
+# data_test = pd.read_csv("..\Data\compas_forest_test.csv")
 
-# If data was split before the experiment (required for treeEnsemble with data fill)
-data_train = pd.read_csv("..\Data\compas_forest_train.csv")
-data_test = pd.read_csv("..\Data\compas_forest_test.csv")
+X, y, cols = get_and_preprocess_compas_data_RBF(params)
+# add unrelated columns, setup
+X['unrelated_column_one'] = np.random.choice([0,1],size=X.shape[0])
+X['unrelated_column_two'] = np.random.choice([0,1],size=X.shape[0])
+data_train, data_test, ytrain, ytest = train_test_split(X, y, test_size=0.1)
+data_train["response"] = ytrain
+data_test["response"] = ytest
+# Train data needs to be saved so it can be generated in R
+data_train.to_csv("..\Data\shap_compas_RBF_train.csv", index = False)
+
 ytrain = data_train.pop("response")
 ytest = data_test.pop("response")
-
-# Train data needs to be saved so it can be generated in R
-data_train["response"] = ytrain
-data_train.to_csv("..\Data\compas_RBF_train.csv", index = False)
 
 # Stops the execution of experiment so generators have time to generate data in R
 input("Press enter, when rbfDataGen and treeEnsemble generated all the data.")
 
 # Names without dummy variables (they are used for explanation methods with data generators, because dummy variables are grouped there)
 original_names = [c for c in data_test]
-original_names[original_names.index("sex_Female")] = "sex"
-original_names.remove("sex_Male")
-original_names[original_names.index("c_charge_degree_M")] = "c_charge_degree"
-original_names.remove("c_charge_degree_F")
+# original_names[original_names.index("sex_Female")] = "sex"
+# original_names.remove("sex_Male")
+# original_names[original_names.index("c_charge_degree_M")] = "c_charge_degree"
+# original_names.remove("c_charge_degree_F")
 
 # Convert categorical features to one-hot encoded vector (this must be done after saving the data
 # as rbfDataGen and treeEnsemble work with original values)
@@ -147,7 +157,7 @@ integer_attributes = [i for i, feature in enumerate(data_test.columns)
 					if (data_test[feature].dtype in ["int64", "int32", "int8", "uint64", "uint32", "uint8"] and i not in categorical_feature_indcs)]
 
 # Response was needed only by rbfDataGen and treeEnsemble
-data_train = data_train.drop("response", axis = 1)
+# data_train = data_train.drop("response", axis = 1)
 # MCD-VAE latent dimension
 latent_dim = data_train.shape[1] // 2
 data_train = pd.get_dummies(data_train)
@@ -226,8 +236,16 @@ def experiment_main():
             				train(xtrain, ytrain, feature_names=features, dummy_idcs=dummy_indcs, integer_idcs=integer_attributes)
 	adv_models["Forest"] = Adversarial_Kernel_SHAP_Model(racist_model_f(), innocuous_model_psi(), generator = "Forest", generator_specs = generator_specs).\
             				train(xtrain, ytrain, feature_names=features, dummy_idcs=dummy_indcs, integer_idcs=integer_attributes)
+	adv_models["CTGAN"] = Adversarial_Kernel_SHAP_Model(racist_model_f(), innocuous_model_psi(), generator = "CTGAN", generator_specs = generator_specs).\
+            				train(xtrain, ytrain, feature_names=features, dummy_idcs=dummy_indcs, integer_idcs=integer_attributes)
 
-	for adversarial in ["Perturbation", "DropoutVAE", "RBF", "Forest"]:
+	adv_models2 = adv_models.copy()
+	adv_models2.pop("DropoutVAE")
+	with open('trained_models/compas_adversarial_shap_models_psi_1.pkl', 'wb') as file:
+		pickle.dump(adv_models2, file)
+	print("PSI 1 MODELS SAVED!!!!!!!!!!!!!!!!!!")
+
+	for adversarial in ["Perturbation", "DropoutVAE", "RBF", "Forest", "CTGAN"]:
 		adv_shap = adv_models[adversarial]
 
 		# Explainers
@@ -239,10 +257,12 @@ def experiment_main():
 								dummy_idcs=dummy_indcs)
 		adv_kernel_explainers["Forest"] = shap.KernelExplainer(adv_shap.predict, xtrain, generator="Forest", generator_specs=generator_specs,\
 								dummy_idcs=dummy_indcs)
-		adv_kernel_explainers["ForestFill"] = shap.KernelExplainer(adv_shap.predict, xtrain, generator="Forest", generator_specs=generator_specs,\
-                                dummy_idcs=dummy_indcs)
+		adv_kernel_explainers["CTGAN"] = shap.KernelExplainer(adv_shap.predict, xtrain, generator="CTGAN", generator_specs=generator_specs,\
+								dummy_idcs=dummy_indcs)
+		# adv_kernel_explainers["ForestFill"] = shap.KernelExplainer(adv_shap.predict, xtrain, generator="Forest", generator_specs=generator_specs,\
+                                # dummy_idcs=dummy_indcs)
 
-		for explainer in ["Perturbation", "DropoutVAE", "RBF", "Forest", "ForestFill"]:
+		for explainer in ["Perturbation", "DropoutVAE", "RBF", "Forest", "CTGAN"]:
 			adv_kernel_explainer = adv_kernel_explainers[explainer]
 
 			# Fill data option
@@ -290,8 +310,16 @@ def experiment_main():
             				train(xtrain, ytrain, feature_names=features, dummy_idcs=dummy_indcs, integer_idcs=integer_attributes)
 	adv_models["Forest"] = Adversarial_Kernel_SHAP_Model(racist_model_f(), innocuous_model_psi_two(), generator = "Forest", generator_specs = generator_specs).\
             				train(xtrain, ytrain, feature_names=features, dummy_idcs=dummy_indcs, integer_idcs=integer_attributes)
+	adv_models["CTGAN"] = Adversarial_Kernel_SHAP_Model(racist_model_f(), innocuous_model_psi_two(), generator = "CTGAN", generator_specs = generator_specs).\
+            				train(xtrain, ytrain, feature_names=features, dummy_idcs=dummy_indcs, integer_idcs=integer_attributes)
 
-	for adversarial in ["Perturbation", "DropoutVAE", "RBF", "Forest"]:
+	adv_models2 = adv_models.copy()
+	adv_models2.pop("DropoutVAE")
+	with open('trained_models/compas_adversarial_shap_models_psi_2.pkl', 'wb') as file:
+		pickle.dump(adv_models2, file)
+	print("PSI 2 MODELS SAVED!!!!!!!!!!!!!!!!!!")
+ 
+	for adversarial in ["Perturbation", "DropoutVAE", "RBF", "Forest", "CTGAN"]:
 		adv_shap = adv_models[adversarial]
 
 		# Explainers
@@ -303,9 +331,12 @@ def experiment_main():
 								dummy_idcs=dummy_indcs)
 		adv_kernel_explainers["Forest"] = shap.KernelExplainer(adv_shap.predict, xtrain, generator="Forest", generator_specs=generator_specs,\
 								dummy_idcs=dummy_indcs)
-		adv_kernel_explainers["ForestFill"] = shap.KernelExplainer(adv_shap.predict, xtrain, generator="Forest", generator_specs=generator_specs,\
+		# adv_kernel_explainers["ForestFill"] = shap.KernelExplainer(adv_shap.predict, xtrain, generator="Forest", generator_specs=generator_specs,\
+                                # dummy_idcs=dummy_indcs)
+		adv_kernel_explainers["CTGAN"] = shap.KernelExplainer(adv_shap.predict, xtrain, generator="CTGAN", generator_specs=generator_specs,\
                                 dummy_idcs=dummy_indcs)
-		for explainer in ["Perturbation", "DropoutVAE", "RBF", "Forest", "ForestFill"]:
+  
+		for explainer in ["Perturbation", "DropoutVAE", "RBF", "Forest", "CTGAN"]:
 			adv_kernel_explainer = adv_kernel_explainers[explainer]
 
 			# Fill data option

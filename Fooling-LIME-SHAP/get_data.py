@@ -60,7 +60,7 @@ def get_and_preprocess_compas_data_RBF(params):
 	POSITIVE_OUTCOME = params.positive_outcome
 	NEGATIVE_OUTCOME = params.negative_outcome
 
-	compas_df = pd.read_csv("../Fooling-LIME-SHAP-master/data/compas-scores-two-years.csv", index_col=0)
+	compas_df = pd.read_csv("data/compas-scores-two-years.csv", index_col=0)
 	compas_df = compas_df.loc[(compas_df['days_b_screening_arrest'] <= 30) &
 							  (compas_df['days_b_screening_arrest'] >= -30) &
 							  (compas_df['is_recid'] != -1) &
@@ -114,9 +114,8 @@ def get_and_preprocess_cc(params):
 	# just dump all x's that have missing values 
 	cols_with_missing_values = []
 	for col in X:
-	    if len(np.where(X[col].values == '?')[0]) >= 1:
-	        cols_with_missing_values.append(col)    
-
+		if len(np.where(X[col].values == '?')[0]) >= 1:
+			cols_with_missing_values.append(col)    
 	y = X[y_col]
 	y_cutoff = np.percentile(y, high_violent_crimes_threshold)
 	X = X.drop(cols_with_missing_values + ['communityname string', 'fold numeric', 'county numeric', 'community numeric', 'state numeric'] + [y_col], axis=1)

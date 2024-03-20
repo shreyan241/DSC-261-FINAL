@@ -5,6 +5,8 @@ train <- read.csv(file="../Data/compas_RBF_train.csv")
 # Encode categorical features as factor
 train$response <- as.factor(train$response)
 train$two_year_recid <- as.factor(train$two_year_recid)
+train$c_charge_degree <- as.factor(train$c_charge_degree)
+train$sex <- as.factor(train$sex)
 
 #############
 # rbfDataGen
@@ -39,3 +41,4 @@ forestGenerated <- newdata(forestGenerator, size = nrow(train))
 # Remove the response column
 forestGenerated <- forestGenerated[, -ncol(forestGenerated)]
 write.csv(forestGenerated, file = "../Data/compas_adversarial_train_forest.csv", row.names = FALSE)
+

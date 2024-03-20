@@ -19,6 +19,9 @@ import pandas as pd
 import lime
 import lime.lime_tabular
 import shap
+import os
+import pickle
+import sys
 
 from copy import deepcopy
 
@@ -38,7 +41,11 @@ data_train, data_test, ytrain, ytest = train_test_split(X, y, test_size=0.1)
 
 # Save the data, so we can generate new samples in R
 data_train["response"] = ytrain
-data_train.to_csv("..\Data\cc_RBF_train.csv", index = False)
+# data_train.to_csv("..\Data\cc_RBF_train.csv", index = False)
+script_dir_path = os.path.dirname(os.path.abspath(__file__))
+cc_train_path = os.path.join(script_dir_path, os.path.pardir, "Data", "cc_RBF_train.csv")
+
+data_train.to_csv(cc_train_path, index = False)
 
 # Stops the execution of experiment so generators have time to generate data in R
 input("Press enter, when rbfDataGen and treeEnsemble generated all the data.")
@@ -136,9 +143,19 @@ def experiment_main():
 	adv_models["Forest"] = Adversarial_Lime_Model(racist_model_f(), innocuous_model_psi(),\
 								generator = "Forest", generator_specs = generator_specs).train(xtrain,\
 								ytrain, feature_names=features, categorical_features=categorical_idcs)
-
-	# Fill the dictionary with explanation methods
-	for generator in ["Perturbation", "DropoutVAE", "RBF", "Forest"]:
+    
+	adv_models["CTGAN"] = Adversarial_Lime_Model(racist_model_f(), innocuous_model_psi(),\
+								generator = "CTGAN", generator_specs = generator_specs).train(xtrain,\
+								ytrain, feature_names=features, categorical_features=categorical_idcs)
+	
+	adv_models2 = adv_models.copy()
+	adv_models2.pop("DropoutVAE")
+	with open('trained_models/cc_adversarial_lime_models_psi_1.pkl', 'wb') as file:
+		pickle.dump(adv_models2, file)
+	print("PSI 1 MODELS SAVED!!!!!!!!!!!!!!!!!!")
+ 		
+  # Fill the dictionary with explanation methods
+	for generator in ["Perturbation", "DropoutVAE", "RBF", "Forest", "CTGAN"]:
 		adv_explainers[generator] = lime.lime_tabular.LimeTabularExplainer(xtrain, feature_names=adv_models[generator].get_column_names(),\
 										discretize_continuous=False, categorical_features=categorical_idcs, generator=generator,\
 										generator_specs=generator_specs, dummies=dummy_idcs, integer_attributes=integer_attributes)
@@ -160,7 +177,7 @@ def experiment_main():
 			print ("Fidelity:", round(adv_lime.fidelity(xtest),2))
 
 			# Save Resutls
-			file_name = f"../Rezultati/CCLime/CCLimeSummary_adversarial_{model}_explainer_{explainer}.csv"
+			file_name = f"../Results/CCLime/CCLimeSummary_adversarial_{model}_explainer_{explainer}.csv"
 			with open(file_name, "w") as output:
 				w = csv.writer(output)
 				for key, val in summary.items():
@@ -185,9 +202,18 @@ def experiment_main():
 	adv_models["Forest"] = Adversarial_Lime_Model(racist_model_f(), innocuous_model_psi_two(),\
 								generator = "Forest", generator_specs = generator_specs).train(xtrain,\
 								ytrain, feature_names=features, categorical_features=categorical_idcs)
+	adv_models["CTGAN"] = Adversarial_Lime_Model(racist_model_f(), innocuous_model_psi_two(),\
+								generator = "CTGAN", generator_specs = generator_specs).train(xtrain,\
+								ytrain, feature_names=features, categorical_features=categorical_idcs)
+	
+	adv_models2 = adv_models.copy()
+	adv_models2.pop("DropoutVAE")
+	with open('trained_models/cc_adversarial_lime_models_psi_2.pkl', 'wb') as file:
+		pickle.dump(adv_models2, file)
+	print("PSI 2 MODELS SAVED!!!!!!!!!!!!!!!!!!")
 
 	# Fill the dictionary with explanation methods
-	for generator in ["Perturbation", "DropoutVAE", "RBF", "Forest"]:
+	for generator in ["Perturbation", "DropoutVAE", "RBF", "Forest", "CTGAN"]:
 		adv_explainers[generator] = lime.lime_tabular.LimeTabularExplainer(xtrain, feature_names=adv_models[generator].get_column_names(),\
 										discretize_continuous=False, categorical_features=categorical_idcs, generator=generator,\
 										generator_specs=generator_specs, dummies=dummy_idcs, integer_attributes=integer_attributes)
@@ -209,7 +235,7 @@ def experiment_main():
 			print ("Fidelity:", round(adv_lime.fidelity(xtest),2))
 
 			# Save Resutls
-			file_name = f"../Rezultati/CCLime/CCLimeSummary2_adversarial_{model}_explainer_{explainer}.csv"
+			file_name = f"../Results/CCLime/CCLimeSummary2_adversarial_{model}_explainer_{explainer}.csv"
 			with open(file_name, "w") as output:
 				w = csv.writer(output)
 				for key, val in summary.items():

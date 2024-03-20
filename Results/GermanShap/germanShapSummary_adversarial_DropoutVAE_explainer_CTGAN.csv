@@ -1,0 +1,3 @@
+1,"('Gender', 0.92)","('LoanRateAsPercentOfIncome', 0.08)"
+2,"('Gender', 0.08)","('HasTelephone', 0.01)","('JobClassIsSkilled', 0.02)","('LoanAmount', 0.01)","('LoanDuration', 0.01)","('LoanRateAsPercentOfIncome', 0.51)","('MissedPayments', 0.03)","('OwnsHouse', 0.04)","('RentsHouse', 0.04)","('Single', 0.25)"
+3,"('HasTelephone', 0.02)","('JobClassIsSkilled', 0.07)","('LoanAmount', 0.01)","('LoanRateAsPercentOfIncome', 0.23)","('MissedPayments', 0.02)","('OwnsHouse', 0.09)","('Single', 0.55)","('YearsAtCurrentHome', 0.01)"

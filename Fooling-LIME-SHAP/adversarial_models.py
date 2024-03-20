@@ -1,6 +1,7 @@
 import numpy as np
+import pickle
 import pandas as pd
-
+import os
 import sklearn
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.preprocessing import StandardScaler
@@ -14,6 +15,8 @@ from Generators.DropoutVAE import DropoutVAE
 from copy import deepcopy
 
 import shap
+
+script_dir_path = os.path.dirname(os.path.abspath(__file__))
 
 class Adversarial_Model(object):
 	"""	A scikit-learn style adversarial explainer base class for adversarial models.  This accetps 
@@ -115,7 +118,6 @@ class Adversarial_Model(object):
 		----------
 		The fidelity score of the adversarial model's predictions to the model you're trying to obscure's predictions.
 		"""
-
 		return (np.sum(self.predict(X) == self.f_obscure.predict(X)) / X.shape[0])
 
 class Adversarial_Lime_Model(Adversarial_Model):
@@ -147,8 +149,8 @@ class Adversarial_Lime_Model(Adversarial_Model):
 			# Original perturbation sampling requires data with average 0 and variance 1
 			self.scaler = StandardScaler()
 
-		# Forest or RBF
-		self.generator = generator
+		else:
+			self.generator = generator
 
 	def train(self, X, y, feature_names, perturbation_multiplier=30, categorical_features=[], integer_attributes=[], rf_estimators=100, estimator=None):
 		""" Trains the adversarial LIME model.  This method trains the perturbation detection classifier to detect instances
@@ -174,7 +176,7 @@ class Adversarial_Lime_Model(Adversarial_Model):
 		all_x, all_y = [], []
 
 		# Data normalization (not for treeEnsemble or rbfDataGen, data is just loaded there)
-		if self.generator not in ["Forest", "RBF"]:
+		if self.generator not in ["Forest", "RBF", "CTGAN"]:
 			X = self.scaler.fit_transform(X)
 
 		# Generate samples with given data generator
@@ -229,6 +231,20 @@ class Adversarial_Lime_Model(Adversarial_Model):
 			all_x = np.concatenate((X, X_gen.values), axis = 0)
 			all_y = np.concatenate((np.ones(X.shape[0]), np.zeros(X_gen.shape[0])))
 
+		elif self.generator == "CTGAN":
+			if self.generator_specs["experiment"] == "Compas":
+				X_gen = pd.read_csv("../Data/compas_adversarial_train_CTGAN_10000.csv")
+			elif self.generator_specs["experiment"] == "German":
+				X_gen = pd.read_csv("../Data/german_adversarial_train_CTGAN_10000.csv")
+			# CC dataset
+			else:
+				X_gen = pd.read_csv("../Data/cc_adversarial_train_CTGAN_10000.csv")
+			# Create dummies (except for CC which does not have any categorical features)
+			if self.generator_specs["experiment"] != "CC":
+				X_gen = pd.get_dummies(X_gen)
+				X_gen = X_gen[self.cols]
+			all_x = np.concatenate((X, X_gen.values), axis = 0)
+			all_y = np.concatenate((np.ones(X.shape[0]), np.zeros(X_gen.shape[0])))
 		# MCD-VAE
 		else:
 			# Generator training
@@ -240,10 +256,54 @@ class Adversarial_Lime_Model(Adversarial_Model):
 			encoded = self.generator.mean_predict(X_val, nums = 2*perturbation_multiplier)
 			all_x = encoded.reshape(2*perturbation_multiplier*encoded.shape[2], X_train.shape[1])
 
+			# Saving Samples
+			all_x_samples_to_save = self.scaler.inverse_transform(all_x)
+			all_x_samples_to_save[:, self.numerical_cols] = (np.around(all_x_samples_to_save[:, self.numerical_cols])).astype(int)
+			
+			if self.generator_specs["experiment"] == "Compas":
+				categorical_feature_name = ['two_year_recid', 'c_charge_degree_F', 'c_charge_degree_M',\
+							'sex_Female', 'sex_Male', 'race', 'unrelated_column_one', 'unrelated_column_two']
+				categorical_feature_indcs = [self.cols.index(c) for c in categorical_feature_name]
+				dummy_idcs = [[categorical_feature_indcs[0]], [categorical_feature_indcs[1], categorical_feature_indcs[2]],\
+							[categorical_feature_indcs[3], categorical_feature_indcs[4]], [categorical_feature_indcs[5]],\
+							[categorical_feature_indcs[6]], [categorical_feature_indcs[7]]]
+				DropoutVAE_save_path = os.path.join(script_dir_path, os.path.pardir, "Data", "compas_adversarial_train_DropoutVAE.csv")
+
+			elif self.generator_specs["experiment"] == "CC":
+				categorical_features = ["unrelated_column_one", "unrelated_column_two"]
+				categorical_feature_indcs = [self.cols.index(c) for c in categorical_features]
+				dummy_idcs = [[categorical_feature_indcs[0]], [categorical_feature_indcs[1]]]
+				DropoutVAE_save_path = os.path.join(script_dir_path, os.path.pardir, "Data", "cc_adversarial_train_DropoutVAE.csv")
+			
+   			# German dataset
+			else:
+				dummy_idcs = [[self.cols.index('CheckingAccountBalance_geq_200'), self.cols.index('CheckingAccountBalance_geq_0_lt_200'), self.cols.index('CheckingAccountBalance_lt_0')], \
+				[self.cols.index('SavingsAccountBalance_geq_500'), self.cols.index('SavingsAccountBalance_geq_100_lt_500'), self.cols.index('SavingsAccountBalance_lt_100')], \
+				[self.cols.index('YearsAtCurrentJob_geq_4'), self.cols.index('YearsAtCurrentJob_geq_1_lt_4'), self.cols.index('YearsAtCurrentJob_lt_1')]]
+				DropoutVAE_save_path = os.path.join(script_dir_path, os.path.pardir, "Data", "german_adversarial_train_DropoutVAE.csv")
+
+   			# Correct values of dummy features to 0 and 1
+			for feature in dummy_idcs:
+				column = all_x_samples_to_save[:, feature]
+				binary = np.zeros(column.shape)
+				# We check if a feature has only two possible values, otherwise it has more dummies
+				if len(feature) == 1:
+					binary = (column > 0.5).astype(int)
+				else:
+					# Value 1 is given to the dummy with highest value
+					ones = column.argmax(axis = 1)
+					for i, idx in enumerate(ones):
+						binary[i, idx] = 1
+				all_x_samples_to_save[:, feature] = binary
+
+			df_samples_to_save =  pd.DataFrame(all_x_samples_to_save, columns=feature_names)
+			df_samples_to_save.to_csv(DropoutVAE_save_path, index=False)
+			print((f"Generated samples saved to {DropoutVAE_save_path}"))
+   
 			# Concatenate the original and sampled instances
 			all_y = np.concatenate((np.zeros(all_x.shape[0]), np.ones(X_train.shape[0] + X_val.shape[0])))
 			all_x = np.concatenate((all_x, X_train, X_val), axis=0)
-
+			
 			# Reverse transofrmation back to the original dimensions
 			all_x = self.scaler.inverse_transform(all_x)
 
@@ -268,7 +328,7 @@ class Adversarial_Lime_Model(Adversarial_Model):
 
 		ypred = self.perturbation_identifier.predict(xtest)
 		self.ood_training_task_ability = (ytest, ypred)
-
+		
 		return self
 
 class Adversarial_Kernel_SHAP_Model(Adversarial_Model):
@@ -295,7 +355,7 @@ class Adversarial_Kernel_SHAP_Model(Adversarial_Model):
 			self.scaler = MinMaxScaler()
 
 	def train(self, X, y, feature_names, background_distribution=None, perturbation_multiplier=10, n_samples=2e4, rf_estimators=100, n_kmeans=10, estimator=None,
-				dummy_idcs = [], integer_idcs = []):
+				dummy_idcs = [], integer_idcs = [], custom_n=900):
 		""" Trains the adversarial SHAP model. This method perturbs the shap training distribution by sampling from 
 		its kmeans (or distribution set generated by data generator) and randomly adding features.  These points get substituted into a test set.  We also check to make 
 		sure that the instance isn't in the test set before adding it to the out of distribution set. If an estimator is 
@@ -353,7 +413,7 @@ class Adversarial_Kernel_SHAP_Model(Adversarial_Model):
 			if background_distribution is None:
 				background_distribution = shap.kmeans(X,n_kmeans).data
 		# In case of treeEnsemble and rbfDataGen we just load the whole distribution set
-		elif self.generator in ["Forest", "RBF"]:
+		elif self.generator in ["Forest", "RBF", "CTGAN"]:
 			if self.generator == "RBF":
 				if self.generator_specs["experiment"] == "Compas":
 					X_gen = pd.read_csv("../Data/compas_adversarial_train_RBF.csv")
@@ -361,13 +421,20 @@ class Adversarial_Kernel_SHAP_Model(Adversarial_Model):
 					X_gen = pd.read_csv("../Data/german_adversarial_train_RBF.csv")
 				else:
 					X_gen = pd.read_csv("../Data/cc_adversarial_train_RBF.csv")
+			elif self.generator == "Forest":
+				if self.generator_specs["experiment"] == "Compas":
+					X_gen = pd.read_csv("../Data/compas_adversarial_train_forest.csv")
+				elif self.generator_specs["experiment"] == "German":
+					X_gen = pd.read_csv("../Data/german_adversarial_train_forest.csv")
+				else:
+					X_gen = pd.read_csv("../Data/cc_adversarial_train_forest.csv")
 			else:
 				if self.generator_specs["experiment"] == "Compas":
-					X_gen = pd.read_csv("../Data/compas_shap_adversarial_train_forest.csv")
+					X_gen = pd.read_csv("../Data/compas_adversarial_train_CTGAN.csv")
 				elif self.generator_specs["experiment"] == "German":
-					X_gen = pd.read_csv("../Data/german_shap_adversarial_train_forest.csv")
+					X_gen = pd.read_csv("../Data/german_adversarial_train_CTGAN.csv")
 				else:
-					X_gen = pd.read_csv("../Data/cc_shap_adversarial_train_forest.csv")
+					X_gen = pd.read_csv("../Data/cc_adversarial_train_CTGAN.csv")
 
 			# Create dummies (except for CC which does not have any categorical features)
 			if self.generator_specs["experiment"] != "CC":
@@ -375,7 +442,42 @@ class Adversarial_Kernel_SHAP_Model(Adversarial_Model):
 				X_gen = X_gen[feature_names]
 			background_distribution = X_gen.values
 		repeated_X = np.repeat(X, perturbation_multiplier, axis=0)
+	
+ 	#--------------------------------------------------------------------------------------
+		# CUSTOM 100 ADVERSARIAL TRAINING SAMPLES FOR DROPOUT VAE
+		new_instances = []
+		equal = []
+		
+		# Generate sampled data
+		for _ in range(int(custom_n)):
+			i = np.random.choice(X.shape[0])
+			point = deepcopy(X[i, :])
 
+			# iterate over points, sampling and updating
+			# We check if data generator is given (in that case we substitute feature values according to the groups)
+			if self.generator != None:
+				# With MCD-VAE we generate new distribution set for each instance
+				if isinstance(self.generator, DropoutVAE):
+					background_distribution = self.generate_data(point, dummy_idcs, integer_idcs, n_kmeans)
+				for _ in range(len(self.groups)):
+					j = np.random.choice(len(self.groups))
+					point[self.groups[j]] = deepcopy(background_distribution[np.random.choice(background_distribution.shape[0]), self.groups[j]])
+	
+			new_instances.append(point)
+		substituted_training_data = np.vstack(new_instances)
+		if isinstance(self.generator, DropoutVAE):
+			if self.generator_specs["experiment"] == "Compas":
+				DropoutVAE_save_path_shap = os.path.join(script_dir_path, os.path.pardir, "Data", "shap_compas_adversarial_train_DropoutVAE.csv")
+			elif self.generator_specs["experiment"] == "CC":
+				DropoutVAE_save_path_shap = os.path.join(script_dir_path, os.path.pardir, "Data", "shap_cc_adversarial_train_DropoutVAE.csv")
+			else:
+				DropoutVAE_save_path_shap = os.path.join(script_dir_path, os.path.pardir, "Data", "shap_german_adversarial_train_DropoutVAE.csv")
+			
+			df_samples_to_save =  pd.DataFrame(substituted_training_data, columns=feature_names)
+			df_samples_to_save.to_csv(DropoutVAE_save_path_shap, index=False)
+			print((f"Generated samples saved to {DropoutVAE_save_path_shap}"))
+    #--------------------------------------------------------------------------------------
+  
 		new_instances = []
 		equal = []
 
@@ -401,6 +503,7 @@ class Adversarial_Kernel_SHAP_Model(Adversarial_Model):
 			new_instances.append(point)
 
 		substituted_training_data = np.vstack(new_instances)
+  
 		all_instances_x = np.vstack((repeated_X, substituted_training_data))
 
 		# make sure feature truly is out of distribution before labeling it

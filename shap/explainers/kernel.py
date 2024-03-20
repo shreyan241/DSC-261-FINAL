@@ -131,7 +131,7 @@ class KernelExplainer(Explainer):
         self.model = convert_to_model(model)
         self.keep_index = kwargs.get("keep_index", False)
         self.keep_index_ordered = kwargs.get("keep_index_ordered", False)
-        if self.generator in ["RBF", "Forest"]:
+        if self.generator in ["RBF", "Forest", "CTGAN"]:
             if self.generator_specs.get("experiment") is None or self.generator_specs.get("feature_names") is None:
                 raise ValueError("feature_names and experiment should not be None")
             if self.generator == "RBF":
@@ -144,13 +144,25 @@ class KernelExplainer(Explainer):
                 if self.generator_specs["experiment"] != "CC":
                     df = pd.get_dummies(df)
                     df = df[self.generator_specs["feature_names"]]
-            else:
+            elif self.generator == "Forest":
                 if self.generator_specs["experiment"] == "Compas":
                     df = pd.read_csv("..\Data\compas_forest.csv")
                 elif self.generator_specs["experiment"] == "German":
                     df = pd.read_csv("..\Data\german_forest.csv")
                 else:
                     df = pd.read_csv("..\Data\cc_forest.csv")
+                # pri CC presledke spremeni v pike
+                if self.generator_specs["experiment"] != "CC":
+                    df = pd.get_dummies(df)
+                    df = df[self.generator_specs["feature_names"]]
+            else:
+                if self.generator_specs["experiment"] == "Compas":
+                    df = pd.read_csv("..\Data\compas_CTGAN.csv")
+                elif self.generator_specs["experiment"] == "German":
+                    df = pd.read_csv("..\Data\german_CTGAN.csv")
+                else:
+                    df = pd.read_csv("..\Data\compas_CTGAN.csv")
+                    
                 # pri CC presledke spremeni v pike
                 if self.generator_specs["experiment"] != "CC":
                     df = pd.get_dummies(df)
